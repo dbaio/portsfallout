@@ -1,0 +1,114 @@
+{% extends "ports/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block body_block %}
+
+<br />
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-md-12" align="center">
+			<h2>
+				<strong>pkg-fallout</strong> Reports
+			</h2>
+		</div>
+	</div>
+	<div class="row">
+		<br />
+	</div>
+
+	<div class="row">
+		<div class="col-md-4" align="center">
+			<table class="table table-sm table-striped">
+				<thead>
+					<tr>
+						<th>
+							build environment
+						</th>
+						<th>
+							#
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+
+	{% for obj in fallout_env %}
+					<tr>
+						<td>
+							{{ obj.env }}
+						</td>
+						<td>
+							{{ obj.total }}
+						</td>
+					</tr>
+	{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		<div class="col-md-4" align="center">
+			<table class="table table-sm table-striped">
+				<thead>
+					<tr>
+						<th>
+							category
+						</th>
+						<th>
+							#
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+	{% for category in fallout_cat %}
+					<tr>
+						<td>
+							{{ category.category }}
+						</td>
+						<td>
+							{{ category.total }}
+						</td>
+					</tr>
+	{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		<div class="col-md-4" align="center">
+			<table class="table table-sm table-striped">
+				<thead>
+					<tr>
+						<th>
+							maintainer
+						</th>
+						<th>
+							#
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+	{% for obj in fallout_main %}
+					<tr>
+						<td>
+							{{ obj.maintainer }}
+						</td>
+						<td>
+							{{ obj.total }}
+						</td>
+					</tr>
+	{% endfor %}
+			</tbody>
+			</table>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-12">
+			<p>
+				Oldest fallout <strong>{{ fallout_oldest.date | date:"Y-m-d H:i" }}</strong> and the
+				most recent <strong>{{ fallout_recent.date | date:"Y-m-d H:i" }}</strong>, total of
+				<strong>{{ fallout_count }}</strong>.
+			</p>
+			<p>
+				Will be kept the pkg-fallout reports only from the last four months.
+			</p>
+		</div>
+	</div>
+</div>
+
+
+{% endblock %}

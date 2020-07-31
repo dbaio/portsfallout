@@ -1,0 +1,58 @@
+{% extends "ports/base.html" %}
+{% block title %}Fallout detail - {{fallout.port}}{% endblock %}
+{% block body_block %}
+
+<br />
+<h2>Fallout detail:</h2>
+<br />
+	<table class="table">
+		 <tr>
+			<th scope="col">Port:</th>
+			<td>{{fallout.port}}</td>
+		 </tr>
+		 <tr>
+			<td>Version:</td>
+			<td>{{fallout.version}}</td>
+		 </tr>
+		 <tr>
+			<td>Maintainer:</td>
+			<td>{{fallout.port.maintainer}}</td>
+		 </tr>
+
+		 <tr>
+			<td>Last committer:</td>
+			<td>{{fallout.last_committer}}</td>
+		 </tr>
+		 <tr>
+			<td>Build environment:</td>
+			<td>{{fallout.env}}</td>
+		 </tr>
+		 <tr>
+			<td>Category:</td>
+			<td>{{fallout.category}}</td>
+		 </tr>
+		 <tr>
+			<td>Report date:</td>
+			<td>{{fallout.date}}</td>
+		 </tr>
+		 <tr>
+			<td>Log URL:</td>
+			<td><a href="{{fallout.log_url}}">{{fallout.log_url}}</a></td>
+		 </tr>
+		 <tr>
+			<td>Build URL:</td>
+			<td><a href="{{fallout.build_url}}">{{fallout.build_url}}</a></td>
+		 </tr>
+		 <tr>
+			<td>Report URL:</td>
+			<td><a href="{{fallout.report_url}}">{{fallout.report_url}}</a></td>
+		 </tr>
+		 <tr>
+			<td>More info:</td>
+			<td>See the <a href="{% url 'ports:detail' fallout.port.id  %}"
+					class="badge badge-success">port detail</a> page for the fallout
+				history for this port. </td> </tr>
+
+	</table>
+
+{% endblock %}

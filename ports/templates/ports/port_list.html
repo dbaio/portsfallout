@@ -1,0 +1,49 @@
+{% extends "ports/base.html" %}
+{% block title %}Port list{% endblock %}
+{% load bootstrap_pagination %}
+{% block body_block %}
+
+<br />
+
+<form action="{% url 'ports:list' %}" method="GET">
+  <div class="form-row">
+    <div class="form-group col-md-3">
+      <label for="port">Port</label>
+		<input type="text" class="form-control" name="port" placeholder="category/port" value="{{form_port}}">
+    </div>
+    <div class="form-group col-md-3">
+      <label for="maintainer">Maintainer</label>
+		<input type="text" class="form-control" name="maintainer" placeholder="maintainer" value="{{form_maintainer}}">
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+</form>
+
+<br />
+
+	<h3>Port List</h3>
+
+<table class="table table-sm">
+  <thead>
+    <tr>
+      <th scope="col">port</th>
+      <th scope="col">maintainer</th>
+      <th scope="col">falouts</th>
+    </tr>
+  </thead>
+  <tbody>
+	{% for port in port_list %}
+    <tr>
+      <td><a href="{% url 'ports:detail' port.id  %}">{{ port.origin }}</a></td>
+      <td>{{ port.maintainer }}</td>
+		<td></td>
+    </tr>
+	{% endfor %}
+  </tbody>
+</table>
+
+<div class="centerstage">
+		{% bootstrap_paginate page_obj range=10 show_prev_next="true" show_first_last="true" centered="true" extra_pagination_classes="justify-content-center" %}
+</div>
+
+{% endblock %}

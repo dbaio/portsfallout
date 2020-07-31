@@ -1,0 +1,4 @@
+django
+django-bootstrap-pagination
+requests
+scrapy

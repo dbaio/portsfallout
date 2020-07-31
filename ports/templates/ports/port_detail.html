@@ -1,0 +1,56 @@
+{% extends "ports/base.html" %}
+{% block title %}Port detail - {{port.origin}}{% endblock %}
+{% block body_block %}
+
+<br />
+<h1>Port detail:</h1>
+<br />
+<table class="table">
+	 <tr>
+		<th scope="col">Port:</th>
+		<td>{{port.origin}}</td>
+	 </tr>
+	 <tr>
+		<td>Maintainer:</td>
+		<td>{{port.maintainer}}</td>
+	 </tr>
+	 <tr>
+		<td>URLs:</td>
+		<td>
+			<a href="https://www.freshports.org/{{port.origin}}" class="badge badge-dark">Fresh Ports</a>
+		</td>
+	 </tr>
+</table>
+<br />
+
+<h3>Fallout List</h3>
+<table class="table table-sm table-striped">
+  <thead>
+    <tr>
+      <th scope="col">port</th>
+      <th scope="col">version</th>
+      <th scope="col">build environment</th>
+      <th scope="col">category</th>
+      <th scope="col">date</th>
+      <th scope="col">urls</th>
+    </tr>
+  </thead>
+  <tbody>
+	{% for fallout in fallout_list %}
+    <tr>
+		<td><small><a href="{% url 'ports:fdetail' fallout.id  %}">{{ fallout.port }}</a></small></td>
+		<td><small>{{ fallout.version }}</small></td>
+      <td><small>{{ fallout.env }}</small></td>
+      <td><small>{{ fallout.category }}</small></td>
+      <td><small>{{ fallout.date | date:"Y-m-d H:i" }}</small></td>
+		<td>
+			<a href="{{fallout.log_url }}" class="badge badge-danger">log</a>
+			<a href="{{fallout.report_url }}" class="badge badge-info">report</a>
+			<a href="{{fallout.build_url }}" class="badge badge-secondary">build queue</a>
+		</td>
+    </tr>
+	{% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
