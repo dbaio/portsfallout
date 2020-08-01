@@ -43,5 +43,10 @@ scrapy runspider \
 
 python3 import-scrapy.py
 
-mv scrapy_output/*.json scrapy_output/processed/
+# keep only full days for history
+if [ "$1" = "today" ]; then
+	rm -f scrapy_output/*.json
+else
+	mv scrapy_output/*.json scrapy_output/processed/
+fi
 
