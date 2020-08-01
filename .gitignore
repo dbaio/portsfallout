@@ -150,3 +150,4 @@ INDEX-*.bz2
 portsfallout/settings.py
 scripts/scrapy_output/*.json
 scripts/scrapy_output/processed/*.json
+.vscode
