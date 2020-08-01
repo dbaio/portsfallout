@@ -12,11 +12,9 @@ from ports.models import Category, Port
 
 
 def fetch_index():
-    print("Fetching index...")
     url = "https://www.FreeBSD.org/ports/INDEX-13.bz2"
     r = requests.get(url, allow_redirects=True)
     open('INDEX-13.bz2', 'wb').write(r.content)
-    print("Done")
 
 
 def read_index():
