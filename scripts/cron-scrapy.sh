@@ -33,7 +33,7 @@ else
 	DATESCRAPPER=$(/bin/date -v-1d +%Y%m%d)
 fi
 
-CUR_TIME=$(/bin/date +%H-%m)
+CUR_TIME=$(/bin/date +%H-%M)
 
 scrapy runspider \
 	-o "scrapy_output/${DATESCRAPPER}_${CUR_TIME}.json" \
