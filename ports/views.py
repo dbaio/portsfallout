@@ -25,22 +25,31 @@ from django.shortcuts import render
 from django.views.generic import View, TemplateView, ListView, DetailView
 from django.db.models import Count, Q
 from ports.models import Port, Category, Fallout
+from datetime import date, timedelta
 
 
 def dashboard(request):
     context = {}
 
+    from_date = date.today() - timedelta(days=30)
+
+    fallout_cat = Fallout.objects.filter(date__gte=from_date).values('category').annotate(total=Count('category')).order_by('-total')
+    context['fallout_cat'] = fallout_cat
+
+    fallout_env = Fallout.objects.filter(date__gte=from_date).values('env').annotate(total=Count('env')).order_by('-total')
+    context['fallout_env'] = fallout_env
+
+    fallout_main = Fallout.objects.filter(date__gte=from_date).values('maintainer').annotate(total=Count('maintainer')).order_by('-total')[:25]
+    context['fallout_main'] = fallout_main
+
+    fallout_count_recent = Fallout.objects.filter(date__gte=from_date).count()
+    context['fallout_count_recent'] = fallout_count_recent
+
     fallout_count = Fallout.objects.count()
     context['fallout_count'] = fallout_count
 
-    fallout_cat = Fallout.objects.all().values('category').annotate(total=Count('category')).order_by('-total')
-    context['fallout_cat'] = fallout_cat
-
-    fallout_env = Fallout.objects.all().values('env').annotate(total=Count('env')).order_by('-total')
-    context['fallout_env'] = fallout_env
-
-    fallout_main = Fallout.objects.all().values('maintainer').annotate(total=Count('maintainer')).order_by('-total')[:25]
-    context['fallout_main'] = fallout_main
+    fallout_count = Fallout.objects.count()
+    context['fallout_count'] = fallout_count
 
     fallout_recent = Fallout.objects.all().values().order_by('-date')[0]
     context['fallout_recent'] = fallout_recent
