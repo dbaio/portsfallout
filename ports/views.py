@@ -98,7 +98,7 @@ class PortListView(ListView):
         port = self.request.GET.get('port', '')
         query = Q(maintainer__icontains=maintainer)
         query.add(Q(origin__icontains=port), Q.AND)
-        queryset = Port.objects.filter(query).order_by('origin')
+        queryset = Port.objects.filter(query).order_by('-fcount').annotate(fcount=Count('fallout'))
         return queryset
 
     def get_context_data(self, **kwargs):

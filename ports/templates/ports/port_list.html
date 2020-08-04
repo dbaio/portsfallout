@@ -36,7 +36,7 @@
     <tr>
       <td><a href="{% url 'ports:detail' port.id  %}">{{ port.origin }}</a></td>
       <td>{{ port.maintainer }}</td>
-		<td></td>
+		<td>{{ port.fcount }}</td>
     </tr>
 	{% endfor %}
   </tbody>
