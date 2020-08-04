@@ -21,6 +21,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import urllib.parse
 from django.db import models
 
 class Category(models.Model):
@@ -46,6 +47,9 @@ class Port(models.Model):
 
     def __str__(self):
         return self.origin
+
+    def origin_url_encode(self):
+        return urllib.parse.quote(self.origin, safe='')
 
 
 class Fallout(models.Model):

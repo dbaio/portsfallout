@@ -38,19 +38,26 @@
   <tbody>
 	{% for fallout in fallout_list %}
     <tr>
-		<td><small><a href="{% url 'ports:fdetail' fallout.id  %}">{{ fallout.port }}</a></small></td>
-		<td><small>{{ fallout.version }}</small></td>
+      <td><small><a href="{% url 'ports:fdetail' fallout.id  %}">{{ fallout.port }}</a></small></td>
+      <td><small>{{ fallout.version }}</small></td>
       <td><small>{{ fallout.env }}</small></td>
       <td><small>{{ fallout.category }}</small></td>
       <td><small>{{ fallout.date | date:"Y-m-d H:i" }}</small></td>
-		<td>
-			<a href="{{fallout.log_url }}" class="badge badge-danger">log</a>
-			<a href="{{fallout.report_url }}" class="badge badge-info">report</a>
-			<a href="{{fallout.build_url }}" class="badge badge-secondary">build queue</a>
-		</td>
+      <td>
+        <a href="{{fallout.log_url }}" class="badge badge-danger">log</a>
+        <a href="{{fallout.report_url }}" class="badge badge-info">report</a>
+        <a href="{{fallout.build_url }}" class="badge badge-secondary">build queue</a>
+      </td>
     </tr>
 	{% endfor %}
   </tbody>
 </table>
+
+	{% if fallout_list|length >= 50 %}
+    <div>
+      <p>See the <a href="{% url 'ports:fallout' %}?port={{port.origin_url_encode}}" class="badge badge-success">fallout history</a>
+        page for more entries for this port.</small></p>
+    </div>
+	{% endif %}
 
 {% endblock %}

@@ -117,7 +117,7 @@ class PortDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context['navbar_list'] = 'active'
         port_pk = self.kwargs.get('pk', None)
-        context['fallout_list'] = Fallout.objects.filter(port=port_pk).order_by('-date')
+        context['fallout_list'] = Fallout.objects.filter(port=port_pk).order_by('-date')[:50]
         return context
 
 
