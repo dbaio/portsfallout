@@ -28,8 +28,6 @@ from ports.models import Port, Category, Fallout
 
 
 def dashboard(request):
-    context = {'navbar_pesquisa':'active'}
-
     fallout_count = Fallout.objects.count()
     context['fallout_count'] = fallout_count
 
