@@ -31,4 +31,4 @@ RET=$?
 
 rm -f INDEX-13.bz2
 
-return $RET
+exit $RET
