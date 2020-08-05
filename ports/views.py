@@ -48,9 +48,6 @@ def dashboard(request):
     fallout_count = Fallout.objects.count()
     context['fallout_count'] = fallout_count
 
-    fallout_count = Fallout.objects.count()
-    context['fallout_count'] = fallout_count
-
     fallout_recent = Fallout.objects.all().values().order_by('-date')[0]
     context['fallout_recent'] = fallout_recent
 
