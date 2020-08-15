@@ -68,7 +68,7 @@ class FalloutListView(ListView):
         env = self.request.GET.get('env', '')
         category = self.request.GET.get('category', '')
 
-        query = Q(maintainer__icontains=maintainer)
+        query = Q(maintainer__istartswith=maintainer)
         query.add(Q(port__origin__icontains=port), Q.AND)
         query.add(Q(env__icontains=env), Q.AND)
         query.add(Q(category__icontains=category), Q.AND)
@@ -102,7 +102,7 @@ class PortListView(ListView):
     def get_queryset(self):
         maintainer = self.request.GET.get('maintainer', '')
         port = self.request.GET.get('port', '')
-        query = Q(maintainer__icontains=maintainer)
+        query = Q(maintainer__istartswith=maintainer)
         query.add(Q(origin__icontains=port), Q.AND)
         queryset = Port.objects.filter(query).order_by('-fcount').annotate(fcount=Count('fallout'))
         return queryset
