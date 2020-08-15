@@ -69,9 +69,15 @@ class FalloutListView(ListView):
         category = self.request.GET.get('category', '')
 
         query = Q(maintainer__istartswith=maintainer)
-        query.add(Q(port__origin__icontains=port), Q.AND)
-        query.add(Q(env__icontains=env), Q.AND)
-        query.add(Q(category__iexact=category), Q.AND)
+
+        if port:
+            query.add(Q(port__origin__icontains=port), Q.AND)
+
+        if env:
+            query.add(Q(env__icontains=env), Q.AND)
+
+        if category:
+            query.add(Q(category__iexact=category), Q.AND)
 
         # categories 8 == Python
         #query.add(Q(port__categories__in=[ 8 ]), Q.AND)
