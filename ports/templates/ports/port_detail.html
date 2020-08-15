@@ -55,7 +55,7 @@
 
 	{% if fallout_list|length >= 50 %}
     <div>
-      <p>See the <a href="{% url 'ports:fallout' %}?port={{port.origin_url_encode}}" class="badge badge-success">fallout history</a>
+      <p>See the <a href="{% url 'ports:fallout' %}?port={{port.origin|urlencode:""}}" class="badge badge-success">fallout history</a>
         page for more entries for this port.</small></p>
     </div>
 	{% endif %}

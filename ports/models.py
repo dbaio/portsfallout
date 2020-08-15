@@ -48,9 +48,6 @@ class Port(models.Model):
     def __str__(self):
         return self.origin
 
-    def origin_url_encode(self):
-        return urllib.parse.quote(self.origin, safe='')
-
 
 class Fallout(models.Model):
     port = models.ForeignKey(Port, on_delete=models.CASCADE)

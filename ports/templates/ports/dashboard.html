@@ -25,7 +25,7 @@
         <tbody>
         {% for obj in fallout_env %}
         <tr>
-          <td>{{ obj.env }}</td>
+          <td><a href="{% url 'ports:fallout' %}?env={{ obj.env|urlencode:"" }}">{{ obj.env }}</a></td>
           <td>{{ obj.total }}</td>
         </tr>
         {% endfor %}
@@ -43,7 +43,7 @@
         <tbody>
         {% for category in fallout_cat %}
         <tr>
-          <td>{{ category.category }}</td>
+          <td><a href="{% url 'ports:fallout' %}?category={{ category.category|urlencode:"" }}">{{ category.category }}</a></td>
           <td>{{ category.total }}</td>
         </tr>
         {% endfor %}
@@ -61,7 +61,7 @@
         <tbody>
         {% for obj in fallout_main %}
           <tr>
-            <td>{{ obj.maintainer }}</td>
+            <td><a href="{% url 'ports:fallout' %}?maintainer={{ obj.maintainer|urlencode:"" }}">{{ obj.maintainer }}</a></td>
             <td>{{ obj.total }}</td>
           </tr>
         {% endfor %}
