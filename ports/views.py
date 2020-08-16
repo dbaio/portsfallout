@@ -25,6 +25,8 @@ from django.shortcuts import render
 from django.views.generic import View, TemplateView, ListView, DetailView
 from django.db.models import Count, Q
 from ports.models import Port, Category, Fallout
+from ports.serializers import CategorySerializer, PortSerializer, FalloutSerializer
+from rest_framework import filters, viewsets
 from datetime import date, timedelta
 
 
@@ -136,4 +138,34 @@ class PortDetailView(DetailView):
 def about(request):
     context_dict = {'navbar_about':'active'}
     return render(request, 'ports/about.html', context_dict)
+
+
+class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for Categories.
+    """
+    search_fields = ['name']
+    filter_backends = (filters.SearchFilter,)
+    queryset = Category.objects.all().order_by('name')
+    serializer_class = CategorySerializer
+
+
+class PortViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for Port's.
+    """
+    search_fields = ['origin', 'maintainer']
+    filter_backends = (filters.SearchFilter,)
+    queryset = Port.objects.all().order_by('origin')
+    serializer_class = PortSerializer
+
+
+class FalloutViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for Fallout's.
+    """
+    search_fields = ['maintainer', 'port__origin', 'env', 'category']
+    filter_backends = (filters.SearchFilter,)
+    queryset = Fallout.objects.all().order_by('-date')
+    serializer_class = FalloutSerializer
 

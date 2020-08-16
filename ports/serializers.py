@@ -21,26 +21,35 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""ports URL Configuration"""
+from ports.models import Category, Port, Fallout
+from rest_framework import serializers
 
-from django.urls import include, path
-from ports import views
-from rest_framework import routers
 
-router = routers.DefaultRouter()
-router.register(r'category', views.CategoryViewSet)
-router.register(r'port', views.PortViewSet)
-router.register(r'fallout', views.FalloutViewSet)
+class CategorySerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name="ports:category-detail",
+    )
+    class Meta:
+        model = Category
+        fields = '__all__'
 
-# TEMPLATE TAGGING
-app_name = 'ports'
 
-urlpatterns = [
-    path('', views.dashboard, name='index'),
-    path('fallout', views.FalloutListView.as_view(), name='fallout'),
-    path('fallout/<int:pk>/', views.FalloutDetailView.as_view(), name='fdetail'),
-    path('port', views.PortListView.as_view(), name='list'),
-    path('port/<int:pk>/', views.PortDetailView.as_view(), name='detail'),
-    path('about', views.about, name='about'),
-    path('api/', include(router.urls)),
-]
+class PortSerializer(serializers.HyperlinkedModelSerializer):
+    categories = CategorySerializer(many=True, read_only=True)
+    url = serializers.HyperlinkedIdentityField(
+        view_name="ports:port-detail",
+    )
+    class Meta:
+        model = Port
+        fields = '__all__'
+
+
+class FalloutSerializer(serializers.HyperlinkedModelSerializer):
+    port = PortSerializer(many=False, read_only=True)
+    url = serializers.HyperlinkedIdentityField(
+        view_name="ports:fallout-detail",
+    )
+    class Meta:
+        model = Fallout
+        fields = '__all__'
+
