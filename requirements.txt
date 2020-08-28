@@ -3,3 +3,4 @@ django-bootstrap-pagination
 requests
 scrapy
 djangorestframework
+python-dateutil
