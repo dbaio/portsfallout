@@ -1,6 +1,32 @@
 {% extends "ports/base.html" %}
+{% load static %}
 {% block title %}Dashboard{% endblock %}
 {% block body_block %}
+
+<script src="{% static "js/Chart.min.js" %}" > </script>
+
+<script>
+  var config = {
+    type: 'line',
+    data: {
+      datasets: [{
+        data: {{ chart_data|safe }},
+        backgroundColor: ['#721B08'],
+        label: 'Fallouts',
+	   }],
+	   labels: {{ chart_labels|safe }}
+    },
+    options: {
+      responsive: true
+    }
+  };
+
+  window.onload = function() {
+    var ctx = document.getElementById('fallout-chart').getContext('2d');
+    window.myChart = new Chart(ctx, config);
+  };
+</script>
+
 
 <br />
 <div class="container-fluid">
@@ -72,6 +98,13 @@
 
   <div class="row">
     <div class="col-md-12">
+      <canvas id="fallout-chart"></canvas>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <br />
       <p>Filtering entries from the last 30 days, total of <strong>{{ fallout_count_recent }}
         </strong> fallout's.</p>
       <p>Oldest fallout <strong>{{ fallout_oldest.date | date:"Y-m-d H:i" }}</strong> and the

@@ -24,6 +24,7 @@
 from django.shortcuts import render
 from django.views.generic import View, TemplateView, ListView, DetailView
 from django.db.models import Count, Q
+from django.db.models.functions import TruncDay
 from ports.models import Port, Category, Fallout
 from ports.serializers import CategorySerializer, PortSerializer, FalloutSerializer
 from rest_framework import filters, viewsets
@@ -55,6 +56,19 @@ def dashboard(request):
 
     fallout_oldest = Fallout.objects.all().values().order_by('date')[0]
     context['fallout_oldest'] = fallout_oldest
+
+    # Chart
+    chart_labels = []
+    chart_data = []
+    querysetChart = Fallout.objects.filter(date__gte=from_date).annotate(date_f=TruncDay('date')).values("date_f").annotate(date_count=Count('id')).order_by("date_f")
+
+    for fallout in querysetChart:
+        chart_labels.append(str(fallout['date_f'].date()))
+        chart_data.append(fallout['date_count'])
+
+    context['chart_labels'] = chart_labels
+    context['chart_data'] = chart_data
+
 
     return render(request, 'ports/dashboard.html', context)
 
