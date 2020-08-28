@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version 1.3.0
+-------------
+
+* Add dashboard chart
+* Add Chart.js v2.9.3
+
+
 Version 1.2.0
 -------------
 
