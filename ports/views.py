@@ -42,7 +42,7 @@ def dashboard(request):
     fallout_env = Fallout.objects.filter(date__gte=from_date).values('env').annotate(total=Count('env')).order_by('-total')
     context['fallout_env'] = fallout_env
 
-    fallout_main = Fallout.objects.filter(date__gte=from_date).values('maintainer').annotate(total=Count('maintainer')).order_by('-total')[:25]
+    fallout_main = Fallout.objects.filter(date__gte=from_date).values('maintainer').annotate(total=Count('maintainer')).order_by('-total')[:20]
     context['fallout_main'] = fallout_main
 
     fallout_count_recent = Fallout.objects.filter(date__gte=from_date).count()
