@@ -27,6 +27,7 @@ from django.db.models import Count, Q
 from django.db.models.functions import TruncDay
 from ports.models import Port, Category, Fallout
 from ports.serializers import CategorySerializer, PortSerializer, FalloutSerializer
+from ports.utils import IsRegex
 from rest_framework import filters, viewsets
 from datetime import date, timedelta
 
@@ -69,7 +70,6 @@ def dashboard(request):
     context['chart_labels'] = chart_labels
     context['chart_data'] = chart_data
 
-
     return render(request, 'ports/dashboard.html', context)
 
 
@@ -84,21 +84,34 @@ class FalloutListView(ListView):
         env = self.request.GET.get('env', '')
         category = self.request.GET.get('category', '')
 
-        query = Q(maintainer__istartswith=maintainer)
+        if IsRegex(maintainer):
+            query = Q(maintainer__iregex=maintainer)
+        else:
+            query = Q(maintainer__istartswith=maintainer)
 
         if port:
-            query.add(Q(port__origin__icontains=port), Q.AND)
+            if IsRegex(port):
+                query.add(Q(port__origin__iregex=port), Q.AND)
+            else:
+                query.add(Q(port__origin__icontains=port), Q.AND)
 
         if env:
-            query.add(Q(env__icontains=env), Q.AND)
+            if IsRegex(env):
+                query.add(Q(env__iregex=env), Q.AND)
+            else:
+                query.add(Q(env__icontains=env), Q.AND)
 
         if category:
-            query.add(Q(category__iexact=category), Q.AND)
+            if IsRegex(category):
+                query.add(Q(category__iregex=category), Q.AND)
+            else:
+                query.add(Q(category__iexact=category), Q.AND)
 
         # categories 8 == Python
         #query.add(Q(port__categories__in=[ 8 ]), Q.AND)
 
         queryset = Fallout.objects.filter(query).order_by('-date')
+
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -124,8 +137,17 @@ class PortListView(ListView):
     def get_queryset(self):
         maintainer = self.request.GET.get('maintainer', '')
         port = self.request.GET.get('port', '')
-        query = Q(maintainer__istartswith=maintainer)
-        query.add(Q(origin__icontains=port), Q.AND)
+
+        if IsRegex(maintainer):
+            query = Q(maintainer__iregex=maintainer)
+        else:
+            query = Q(maintainer__istartswith=maintainer)
+
+        if IsRegex(port):
+            query.add(Q(origin__iregex=port), Q.AND)
+        else:
+            query.add(Q(origin__icontains=port), Q.AND)
+
         queryset = Port.objects.filter(query).annotate(fcount=Count('fallout')).order_by('-fcount')
         return queryset
 
