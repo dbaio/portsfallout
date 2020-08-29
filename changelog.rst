@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 1.4.0
+-------------
+
+* Add support for filtering with regular expressions
+
+
 Version 1.3.0
 -------------
 
