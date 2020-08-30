@@ -24,6 +24,8 @@
 """Auxiliary functions for the application
 """
 
+import re
+
 
 def IsRegex(raw_text):
     """Check if the string has characters used for regular expressions
@@ -40,6 +42,11 @@ def IsRegex(raw_text):
     """
 
     character_list = ['^', '$', '*', '+', '?', '{', '\\', '[', '(', '|', '!']
+
+    try:
+        re.compile(raw_text)
+    except re.error:
+        return False
 
     for str_char in raw_text:
         if str_char in character_list:
