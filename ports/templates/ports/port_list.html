@@ -26,7 +26,7 @@
 
 	<h3>Port List</h3>
 
-<table class="table table-sm">
+<table class="table table-sm table-striped">
   <thead>
     <tr>
       <th scope="col">port</th>
@@ -37,9 +37,9 @@
   <tbody>
 	{% for port in port_list %}
     <tr>
-      <td><a href="{% url 'ports:detail' port.id  %}">{{ port.origin }}</a></td>
-      <td>{{ port.maintainer }}</td>
-		<td>{{ port.fcount }}</td>
+      <td><small><a href="{% url 'ports:detail' port.id  %}">{{ port.origin }}</a></small></td>
+      <td><small>{{ port.maintainer }}</small></td>
+		<td><small>{{ port.fcount }}</small></td>
     </tr>
 	{% endfor %}
   </tbody>
@@ -48,5 +48,13 @@
 <div class="centerstage">
 		{% bootstrap_paginate page_obj range=10 show_prev_next="true" show_first_last="true" centered="true" extra_pagination_classes="justify-content-center" %}
 </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <br />
+      <p>Filtering entries from the last 30 days.</p>
+    </div>
+  </div>
+
 
 {% endblock %}

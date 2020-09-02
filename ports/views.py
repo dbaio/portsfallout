@@ -148,6 +148,9 @@ class PortListView(ListView):
         else:
             query.add(Q(origin__icontains=port), Q.AND)
 
+        from_date = date.today() - timedelta(days=30)
+        query.add(Q(fallout__date__gte=from_date), Q.AND)
+
         queryset = Port.objects.filter(query).annotate(fcount=Count('fallout')).order_by('-fcount')
         return queryset
 
