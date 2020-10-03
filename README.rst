@@ -118,4 +118,5 @@ Execution for keeping the database always updated:
 
    # Update DNS values of the pkg-fallout servers
    45  3  *  *  *  python manage.py server_update
+   45  3  *  *  *  python manage.py server_update -v 0  # no output
 

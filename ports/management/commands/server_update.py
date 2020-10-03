@@ -42,6 +42,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
+        verbosity = options.get('verbosity')
+
         if not options['period']:
             period = 90
         else:
@@ -52,7 +54,9 @@ class Command(BaseCommand):
 
         for srv in Servers:
             if srv['server']:
-                self.stdout.write(f"{srv['server']}")
+
+                if verbosity > 0:
+                    self.stdout.write(f"{srv['server']}")
 
                 try:
                     dns_v4 = dns.resolver.query(srv['server'], 'A')
@@ -64,15 +68,16 @@ class Command(BaseCommand):
                 except:
                     dns_v6 = False
 
-                if dns_v4:
-                    self.stdout.write(self.style.SUCCESS('  Has IPv4 address'))
-                else:
-                    self.stdout.write(self.style.ERROR('  IPv4 address not found'))
+                if verbosity > 0:
+                    if dns_v4:
+                        self.stdout.write(self.style.SUCCESS('  Has IPv4 address'))
+                    else:
+                        self.stdout.write(self.style.ERROR('  IPv4 address not found'))
 
-                if dns_v6:
-                    self.stdout.write(self.style.SUCCESS('  Has IPv6 address'))
-                else:
-                    self.stdout.write(self.style.ERROR('  IPv6 address not found'))
+                    if dns_v6:
+                        self.stdout.write(self.style.SUCCESS('  Has IPv6 address'))
+                    else:
+                        self.stdout.write(self.style.ERROR('  IPv6 address not found'))
 
 
                 try:
