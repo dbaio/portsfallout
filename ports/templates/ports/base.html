@@ -8,13 +8,21 @@
         {% block title %}{% endblock %} - FreeBSD pkg-fallout
       </title>
       <link rel="stylesheet" href="{% static "css/bootstrap.min.css" %}" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+      <!-- favicon -->
+      <link rel="apple-touch-icon" sizes="120x120" href="{% static "/apple-touch-icon.png" %}">
+      <link rel="icon" type="image/png" sizes="32x32" href="{% static "/favicon-32x32.png" %}">
+      <link rel="icon" type="image/png" sizes="16x16" href="{% static "/favicon-16x16.png" %}">
+      <link rel="manifest" href="{% static "/site.webmanifest" %}">
+      <link rel="mask-icon" href="{% static "/safari-pinned-tab.svg" %}" color="#5bbad5">
+      <meta name="msapplication-TileColor" content="#da532c">
+      <meta name="theme-color" content="#ffffff">
    </head>
    <body>
     <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #800000">
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <a class="navbar-brand" href="{% url 'ports:index' %}">Home</a>
+      <a class="navbar-brand" href="{% url 'ports:index' %}"><img src="{% static "fallout-48-w.png" %}" alt="Portsfallout"></a>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
           <li class="nav-item {{ navbar_fallout }}">

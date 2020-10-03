@@ -1,4 +1,5 @@
 {% extends "ports/base.html" %}
+{% load static %}
 {% block title %}About{% endblock %}
 {% block body_block %}
 
@@ -8,7 +9,10 @@
 
 <br />
 
-<p>Maintained by dbaio@, just an easy way to search/query the
+<img src="{% static "fallout-128.png" %}" alt="Portsfallout">
+<br />
+
+<p><strong>Portsfallout</strong>, maintained by dbaio@, just an easy way to search/query the
   <a href="https://lists.freebsd.org/pipermail/freebsd-pkg-fallout/">FreeBSD pkg-fallout</a> archive.</p>
 
 <p><a href="https://github.com/dbaio/portsfallout/blob/master/changelog.rst">portsfallout v1.4.0</a></p>

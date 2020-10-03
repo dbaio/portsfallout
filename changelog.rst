@@ -8,6 +8,7 @@ Unreleased
 * Add management command `server_update`:
   Update DNS values of the pkg-fallout servers
 * Transform script remove_old_fallouts.py as a management command
+* Add logo and favicon
 
 
 Version 1.4.0
