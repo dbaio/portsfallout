@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+Version 1.5.0
+-------------
 
 * Add Server page for showing IPv4 and IPv6 connectivity
 * Add management command `server_update`:
