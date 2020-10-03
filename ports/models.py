@@ -66,3 +66,11 @@ class Fallout(models.Model):
         # head-arm64-default | net/findomain
         return self.env + " | " + self.port.origin
 
+
+class Server(models.Model):
+    name = models.CharField(max_length=48, unique=True)
+    v4 = models.BooleanField(default=False)
+    v6 = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name

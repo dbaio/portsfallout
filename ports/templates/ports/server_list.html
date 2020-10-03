@@ -1,0 +1,51 @@
+{% extends "ports/base.html" %}
+{% block title %}Server list{% endblock %}
+{% load bootstrap_pagination %}
+{% block body_block %}
+
+<br />
+
+	<h3>Server List</h3>
+
+<table class="table table-sm table-striped">
+  <thead>
+    <tr>
+      <th scope="col">server</th>
+      <th scope="col">connectivity</th>
+    </tr>
+  </thead>
+  <tbody>
+	{% for server in server_list %}
+    <tr>
+      <td><small><a href="http://{{ server.name }}">{{ server.name }}</a></small></td>
+      <td><small>
+        {% if server.v4 %}
+            <span class="badge badge-success">IPv4</span>
+        {% else %}
+            <span class="badge badge-danger">IPv4</span>
+        {% endif %}
+
+        {% if server.v6 %}
+            <span class="badge badge-success">IPv6</span>
+        {% else %}
+            <span class="badge badge-danger">IPv6</span>
+        {% endif %}
+        </small>
+      </td>
+    </tr>
+	{% endfor %}
+  </tbody>
+</table>
+
+<div class="centerstage">
+		{% bootstrap_paginate page_obj range=10 show_prev_next="true" show_first_last="true" centered="true" extra_pagination_classes="justify-content-center" %}
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+      <br />
+      <p>Some servers have only IPv6 connectivity.</p>
+    </div>
+  </div>
+
+{% endblock %}

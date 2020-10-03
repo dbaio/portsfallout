@@ -116,3 +116,6 @@ Execution for keeping the database always updated:
    30  10  *  *  *  /portsfallout/scripts/cron-scrapy.sh today
    30  18  *  *  *  /portsfallout/scripts/cron-scrapy.sh today
 
+   # Update DNS values of the pkg-fallout servers
+   45  3  *  *  *  python manage.py server_update
+

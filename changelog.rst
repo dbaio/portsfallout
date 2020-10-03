@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+* Add Server page for showing IPv4 and IPv6 connectivity
+* Add management command `server_update`:
+  Update DNS values of the pkg-fallout servers
+
+
 Version 1.4.0
 -------------
 

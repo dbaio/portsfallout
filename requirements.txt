@@ -4,3 +4,4 @@ requests
 scrapy
 djangorestframework
 python-dateutil
+dnspython

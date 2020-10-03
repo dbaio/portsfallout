@@ -25,7 +25,7 @@ from django.shortcuts import render
 from django.views.generic import View, TemplateView, ListView, DetailView
 from django.db.models import Count, Q
 from django.db.models.functions import TruncDay
-from ports.models import Port, Category, Fallout
+from ports.models import Port, Category, Fallout, Server
 from ports.serializers import CategorySerializer, PortSerializer, FalloutSerializer
 from ports.utils import IsRegex
 from rest_framework import filters, viewsets
@@ -174,6 +174,17 @@ class PortDetailView(DetailView):
         return context
 
 
+class ServerListView(ListView):
+    paginate_by = 50
+    model = Server
+    ordering = ['name']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['navbar_server'] = 'active'
+        return context
+
+
 def about(request):
     context_dict = {'navbar_about':'active'}
     return render(request, 'ports/about.html', context_dict)
@@ -207,4 +218,3 @@ class FalloutViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = (filters.SearchFilter,)
     queryset = Fallout.objects.all().order_by('-date')
     serializer_class = FalloutSerializer
-

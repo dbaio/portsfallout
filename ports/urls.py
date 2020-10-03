@@ -41,6 +41,7 @@ urlpatterns = [
     path('fallout/<int:pk>/', views.FalloutDetailView.as_view(), name='fdetail'),
     path('port', views.PortListView.as_view(), name='list'),
     path('port/<int:pk>/', views.PortDetailView.as_view(), name='detail'),
+    path('server', views.ServerListView.as_view(), name='server'),
     path('about', views.about, name='about'),
     path('api/', include(router.urls)),
 ]
