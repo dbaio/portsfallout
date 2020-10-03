@@ -9,6 +9,7 @@ Unreleased
   Update DNS values of the pkg-fallout servers
 * Transform script remove_old_fallouts.py as a management command
 * Add logo and favicon
+* Update Bootstrap to v4.5.2
 
 
 Version 1.4.0
