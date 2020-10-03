@@ -36,8 +36,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
 
         parser.add_argument('period',
-                            nargs='?', 
-                            type=int, 
+                            nargs='?',
+                            type=int,
                             help='Query entries from the last X days (default: 90)',)
 
     def handle(self, *args, **options):
@@ -78,7 +78,7 @@ class Command(BaseCommand):
                 try:
                     db_srv = Server.objects.get(name=srv['server'])
                 except:
-                    db_srv = None    
+                    db_srv = None
 
                 if db_srv:
                     if db_srv.v4 != bool(dns_v4) or db_srv.v6 != bool(dns_v6):
