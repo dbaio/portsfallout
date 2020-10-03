@@ -21,28 +21,30 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-import sys
-
-sys.path.insert(1, r'../')
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'portsfallout.settings')
-
-import django
-django.setup()
-from django.utils import timezone as dtz
+from django.core.management.base import BaseCommand, CommandError
 from ports.models import Fallout
 
+from django.utils import timezone as dtz
 
-def remove_old_fallouts(days_keep):
-    oldest = dtz.make_aware(dtz.datetime.today() - dtz.timedelta(days=days_keep))
-    Fallout.objects.filter(date__lte=oldest).delete()
+import parser
 
 
-if __name__ == "__main__":
-    try:
-        days_keep = int(sys.argv[1])
-    except:
-        days_keep = 120
+class Command(BaseCommand):
+    help = 'Remove older fallouts from the database'
 
-    remove_old_fallouts(days_keep)
+    def add_arguments(self, parser):
 
+        parser.add_argument('period',
+                            nargs='?',
+                            type=int,
+                            help='Query for older than X days (default: 120)',)
+
+    def handle(self, *args, **options):
+
+        if not options['period']:
+            period = 120
+        else:
+            period = options['period']
+
+        period_date = dtz.make_aware(dtz.datetime.today() - dtz.timedelta(days=period))
+        Fallout.objects.filter(date__lte=period_date).delete()

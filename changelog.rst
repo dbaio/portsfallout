@@ -7,6 +7,7 @@ Unreleased
 * Add Server page for showing IPv4 and IPv6 connectivity
 * Add management command `server_update`:
   Update DNS values of the pkg-fallout servers
+* Transform script remove_old_fallouts.py as a management command
 
 
 Version 1.4.0
