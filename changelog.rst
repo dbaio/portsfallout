@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+Version 1.5.1
+-------------
 
 * Add management command `clear_cache`: Clear whole cache
 
