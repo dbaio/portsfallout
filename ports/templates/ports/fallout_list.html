@@ -24,6 +24,20 @@
       <input type="text" class="form-control" name="category" aria-describedby="categoryHelp" placeholder="patch" value="{{ form_category }}">
     </div>
   </div>
+  <div class="form-row">
+    <div class="form-group col-md-3">
+      <label for="categories">Port Catagories</label>
+      <select multiple class="form-control" name="categories">
+{% for category in categories %}
+    {% if category|stringformat:"s" in form_categories %}
+        <option selected>{{ category }}</option>
+    {% else %}
+        <option>{{ category }}</option>
+    {% endif %}
+{% endfor %}
+      </select>
+    </div>
+  </div>
   <button type="submit" class="btn btn-primary btn-sm">Filter</button>
   <small class="text-muted">
     Regular expressions are permitted

@@ -83,6 +83,7 @@ class FalloutListView(ListView):
         port = self.request.GET.get('port', '')
         env = self.request.GET.get('env', '')
         category = self.request.GET.get('category', '')
+        categories = self.request.GET.getlist('categories')
 
         if IsRegex(maintainer):
             query = Q(maintainer__iregex=maintainer)
@@ -107,8 +108,8 @@ class FalloutListView(ListView):
             else:
                 query.add(Q(category__iexact=category), Q.AND)
 
-        # categories 8 == Python
-        #query.add(Q(port__categories__in=[ 8 ]), Q.AND)
+        if categories:
+            query.add(Q(port__categories__name__in=categories), Q.AND)
 
         queryset = Fallout.objects.filter(query).order_by('-date')
 
@@ -121,6 +122,8 @@ class FalloutListView(ListView):
         context['form_port'] = self.request.GET.get('port', '')
         context['form_env'] = self.request.GET.get('env', '')
         context['form_category'] = self.request.GET.get('category', '')
+        context['form_categories'] = self.request.GET.getlist('categories')
+        context['categories'] = Category.objects.all().order_by('name')
         return context
 
 

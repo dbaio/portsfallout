@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+* Add categories filter on Fallout list
+
+
 Version 1.5.1
 -------------
 
