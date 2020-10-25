@@ -36,6 +36,11 @@
     {% endif %}
 {% endfor %}
       </select>
+      {% if form_categories %}
+      <small class="text-muted">
+        {{ form_categories }}
+      {% endif %}
+      </small>
     </div>
   </div>
   <button type="submit" class="btn btn-primary btn-sm">Filter</button>
