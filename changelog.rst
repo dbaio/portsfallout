@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+Version 1.5.3
+-------------
 
 * Add flavors support
 
