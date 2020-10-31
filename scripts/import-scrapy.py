@@ -75,7 +75,7 @@ def read_scrapy_json():
             i_date = parser.parse(row['date'])
 
             if port:
-                fallout = Fallout.objects.get_or_create(port=port,
+                fallout, created = Fallout.objects.get_or_create(port=port,
                                                         env=i_env,
                                                         version=i_version,
                                                         category=i_category,
@@ -85,7 +85,13 @@ def read_scrapy_json():
                                                         log_url=row['log_url'],
                                                         build_url=row['build_url'],
                                                         report_url=row['report_url'],
-                                                        server=i_server)[0]
+                                                        server=i_server,
+                                                        defaults={'flavor': row['flavor']},)
+
+                if not created:
+                    if fallout.flavor != row['flavor']:
+                        fallout.flavor = row['flavor']
+                        fallout.save()
 
 
 if __name__ == "__main__":

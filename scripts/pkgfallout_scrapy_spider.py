@@ -85,6 +85,7 @@ class PkgfalloutScrapySpider(scrapy.Spider):
                 'last_committer': response.css('body pre a::text')[1].get(),
                 'log_url': response.css('body pre a::text')[2].get(),
                 'build_url': response.css('body pre a::text')[3].get(),
+                'flavor': response.css('body pre::text').re_first(r'FLAVOR=.*').split('=')[-1],
                 'report_url': response.url,
             }
 

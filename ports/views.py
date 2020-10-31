@@ -37,14 +37,17 @@ def dashboard(request):
 
     from_date = date.today() - timedelta(days=30)
 
-    fallout_cat = Fallout.objects.filter(date__gte=from_date).values('category').annotate(total=Count('category')).order_by('-total')
+    fallout_cat = Fallout.objects.filter(date__gte=from_date).values('category').annotate(total=Count('category')).order_by('-total')[:20]
     context['fallout_cat'] = fallout_cat
 
-    fallout_env = Fallout.objects.filter(date__gte=from_date).values('env').annotate(total=Count('env')).order_by('-total')
+    fallout_env = Fallout.objects.filter(date__gte=from_date).values('env').annotate(total=Count('env')).order_by('-total')[:20]
     context['fallout_env'] = fallout_env
 
     fallout_main = Fallout.objects.filter(date__gte=from_date).values('maintainer').annotate(total=Count('maintainer')).order_by('-total')[:20]
     context['fallout_main'] = fallout_main
+
+    fallout_flavor = Fallout.objects.filter(date__gte=from_date).values('flavor').exclude(flavor__exact='').annotate(total=Count('flavor')).order_by('-total')[:20]
+    context['fallout_flavor'] = fallout_flavor
 
     fallout_count_recent = Fallout.objects.filter(date__gte=from_date).count()
     context['fallout_count_recent'] = fallout_count_recent
@@ -83,6 +86,7 @@ class FalloutListView(ListView):
         port = self.request.GET.get('port', '')
         env = self.request.GET.get('env', '')
         category = self.request.GET.get('category', '')
+        flavor = self.request.GET.get('flavor', '')
         categories = self.request.GET.getlist('categories')
 
         if IsRegex(maintainer):
@@ -108,6 +112,12 @@ class FalloutListView(ListView):
             else:
                 query.add(Q(category__iexact=category), Q.AND)
 
+        if flavor:
+            if IsRegex(flavor):
+                query.add(Q(flavor__iregex=flavor), Q.AND)
+            else:
+                query.add(Q(flavor__icontains=flavor), Q.AND)
+
         if categories:
             query.add(Q(port__categories__name__in=categories), Q.AND)
 
@@ -122,6 +132,7 @@ class FalloutListView(ListView):
         context['form_port'] = self.request.GET.get('port', '')
         context['form_env'] = self.request.GET.get('env', '')
         context['form_category'] = self.request.GET.get('category', '')
+        context['form_flavor'] = self.request.GET.get('flavor', '')
         context['form_categories'] = self.request.GET.getlist('categories')
         context['categories'] = Category.objects.all().order_by('name')
         return context

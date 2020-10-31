@@ -42,6 +42,10 @@
       {% endif %}
       </small>
     </div>
+    <div class="form-group col-md-3">
+      <label for="flavor">Flavor</label>
+      <input type="text" class="form-control" name="flavor" aria-describedby="flavorHelp" placeholder="flavor" value="{{ form_flavor }}">
+    </div>
   </div>
   <button type="submit" class="btn btn-primary btn-sm">Filter</button>
   <small class="text-muted">
@@ -67,7 +71,15 @@
   <tbody>
 	{% for fallout in fallout_list %}
     <tr>
-		<td><small><a href="{% url 'ports:fdetail' fallout.id  %}">{{ fallout.port }}</a></small></td>
+      <td>
+        <small><a href="{% url 'ports:fdetail' fallout.id  %}">
+        {% if fallout.flavor %}
+          {{ fallout.port }}@{{ fallout.flavor }}
+        {% else %}
+          {{ fallout.port }}
+        {% endif %}
+        </a></small>
+    </td>
 		<td><small>{{ fallout.maintainer }}</small></td>
       <td><small>{{ fallout.env }}</small></td>
       <td><small>{{ fallout.category }}</small></td>

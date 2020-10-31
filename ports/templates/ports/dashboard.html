@@ -40,12 +40,12 @@
   </div>
 
   <div class="row">
-    <div class="col-md-4" align="center">
+    <div class="col-md-3" align="center">
       <table class="table table-sm table-striped">
         <thead>
           <tr>
             <th>build environment</th>
-            <th>#</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -58,12 +58,12 @@
         </tbody>
       </table>
     </div>
-    <div class="col-md-4" align="center">
+    <div class="col-md-3" align="center">
       <table class="table table-sm table-striped">
         <thead>
           <tr>
             <th>category</th>
-            <th>#</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -76,12 +76,30 @@
         </tbody>
       </table>
     </div>
-    <div class="col-md-4" align="center">
+    <div class="col-md-3" align="center">
+      <table class="table table-sm table-striped">
+        <thead>
+          <tr>
+            <th>flavor</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for flavor in fallout_flavor %}
+        <tr>
+          <td><a href="{% url 'ports:fallout' %}?flavor={{ flavor.flavor|urlencode:"" }}">{{ flavor.flavor }}</a></td>
+          <td>{{ flavor.total }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="col-md-3" align="center">
       <table class="table table-sm table-striped">
         <thead>
           <tr>
             <th>maintainer</th>
-            <th>#</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>

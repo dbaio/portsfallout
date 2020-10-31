@@ -61,6 +61,7 @@ class Fallout(models.Model):
     build_url = models.URLField()
     report_url = models.URLField()
     server = models.CharField(max_length=48, blank=True)
+    flavor = models.CharField(max_length=24, blank=True)
 
     def __str__(self):
         # head-arm64-default | net/findomain

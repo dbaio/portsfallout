@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+* Add flavors support
+
+
 Version 1.5.2
 -------------
 

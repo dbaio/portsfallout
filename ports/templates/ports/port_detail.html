@@ -38,7 +38,15 @@
   <tbody>
 	{% for fallout in fallout_list %}
     <tr>
-      <td><small><a href="{% url 'ports:fdetail' fallout.id  %}">{{ fallout.port }}</a></small></td>
+      <td>
+        <small><a href="{% url 'ports:fdetail' fallout.id  %}">
+        {% if fallout.flavor %}
+          {{ fallout.port }}@{{ fallout.flavor }}
+        {% else %}
+          {{ fallout.port }}
+        {% endif %}
+        </a></small>
+      </td>
       <td><small>{{ fallout.version }}</small></td>
       <td><small>{{ fallout.env }}</small></td>
       <td><small>{{ fallout.category }}</small></td>
