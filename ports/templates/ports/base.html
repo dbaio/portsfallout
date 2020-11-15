@@ -19,10 +19,10 @@
    </head>
    <body>
     <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #800000">
+      <a class="navbar-brand" href="{% url 'ports:index' %}"><img src="{% static "fallout-48-w.png" %}" alt="Portsfallout"></a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <a class="navbar-brand" href="{% url 'ports:index' %}"><img src="{% static "fallout-48-w.png" %}" alt="Portsfallout"></a>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
           <li class="nav-item {{ navbar_fallout }}">
@@ -35,7 +35,7 @@
             <a class="nav-link" href="{% url 'ports:server' %}"">Servers</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link"">|</a>
+            <a class="nav-link disabled">|</a>
           </li>
           <li class="nav-item {{ navbar_about }}">
             <a class="nav-link" href="{% url 'ports:about' %}">About</a>
