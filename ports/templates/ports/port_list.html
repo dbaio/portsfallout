@@ -26,24 +26,26 @@
 
 	<h3>Port List</h3>
 
+<div class="table-responsive">
 <table class="table table-sm table-striped">
   <thead>
     <tr>
-      <th scope="col">port</th>
-      <th scope="col">maintainer</th>
-      <th scope="col">fallouts</th>
+      <th scope="col" class="text-nowrap">port</th>
+      <th scope="col" class="text-nowrap">maintainer</th>
+      <th scope="col" class="text-nowrap">fallouts</th>
     </tr>
   </thead>
   <tbody>
 	{% for port in port_list %}
     <tr>
-      <td><small><a href="{% url 'ports:detail' port.id  %}">{{ port.origin }}</a></small></td>
-      <td><small>{{ port.maintainer }}</small></td>
-		<td><small>{{ port.fcount }}</small></td>
+      <td class="text-nowrap"><small><a href="{% url 'ports:detail' port.id  %}">{{ port.origin }}</a></small></td>
+      <td class="text-nowrap"><small>{{ port.maintainer }}</small></td>
+      <td class="text-nowrap"><small>{{ port.fcount }}</small></td>
     </tr>
 	{% endfor %}
   </tbody>
 </table>
+</div>
 
 <div class="centerstage">
 		{% bootstrap_paginate page_obj range=10 show_prev_next="true" show_first_last="true" centered="true" extra_pagination_classes="justify-content-center" %}
