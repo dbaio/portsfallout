@@ -4,6 +4,7 @@ Changelog
 Unreleased
 ----------
 
+* Fix fallout history link in the port detail page
 * Update Chart.js to v2.9.4
 * Use table-responsive and don't wrap text
 * Update Bootstrap to v4.5.3
