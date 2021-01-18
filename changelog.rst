@@ -4,6 +4,7 @@ Changelog
 Unreleased
 ----------
 
+* Update Chart.js to v2.9.4
 * Use table-responsive and don't wrap text
 * Update Bootstrap to v4.5.3
 * Fix FreshPorts name
