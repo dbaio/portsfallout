@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+Version 1.5.4
+-------------
 
 * Fix fallout history link in the port detail page
 * Update Chart.js to v2.9.4
