@@ -24,21 +24,22 @@
 <br />
 
 <h3>Fallout List</h3>
+<div class="table-responsive">
 <table class="table table-sm table-striped">
   <thead>
     <tr>
-      <th scope="col">port</th>
-      <th scope="col">version</th>
-      <th scope="col">build environment</th>
-      <th scope="col">category</th>
-      <th scope="col">date</th>
-      <th scope="col">urls</th>
+      <th scope="col" class="text-nowrap">port</th>
+      <th scope="col" class="text-nowrap">version</th>
+      <th scope="col" class="text-nowrap">build environment</th>
+      <th scope="col" class="text-nowrap">category</th>
+      <th scope="col" class="text-nowrap">date</th>
+      <th scope="col" class="text-nowrap">urls</th>
     </tr>
   </thead>
   <tbody>
 	{% for fallout in fallout_list %}
     <tr>
-      <td>
+      <td class="text-nowrap">
         <small><a href="{% url 'ports:fdetail' fallout.id  %}">
         {% if fallout.flavor %}
           {{ fallout.port }}@{{ fallout.flavor }}
@@ -47,11 +48,11 @@
         {% endif %}
         </a></small>
       </td>
-      <td><small>{{ fallout.version }}</small></td>
-      <td><small>{{ fallout.env }}</small></td>
-      <td><small>{{ fallout.category }}</small></td>
-      <td><small>{{ fallout.date | date:"Y-m-d H:i" }}</small></td>
-      <td>
+      <td class="text-nowrap"><small>{{ fallout.version }}</small></td>
+      <td class="text-nowrap"><small>{{ fallout.env }}</small></td>
+      <td class="text-nowrap"><small>{{ fallout.category }}</small></td>
+      <td class="text-nowrap"><small>{{ fallout.date | date:"Y-m-d H:i" }}</small></td>
+      <td class="text-nowrap">
         <a href="{{fallout.log_url }}" class="badge badge-danger">log</a>
         <a href="{{fallout.report_url }}" class="badge badge-info">report</a>
         <a href="{{fallout.build_url }}" class="badge badge-secondary">build queue</a>
@@ -60,6 +61,7 @@
 	{% endfor %}
   </tbody>
 </table>
+</div>
 
 	{% if fallout_list|length >= 50 %}
     <div>
