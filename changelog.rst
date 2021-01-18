@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+* Use table-responsive and don't wrap text
+* Update Bootstrap to v4.5.3
+* Fix FreshPorts name
+* menu: Move burger icon to the right
+
+
 Version 1.5.3
 -------------
 
