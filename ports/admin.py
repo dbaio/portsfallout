@@ -22,7 +22,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.contrib import admin
-from ports.models import Category, Port, Fallout
+from ports.models import Category, Port, Fallout, Server
 
 
 class PortAdmin(admin.ModelAdmin):
@@ -49,9 +49,15 @@ class FalloutAdmin(admin.ModelAdmin):
     actions_on_bottom = True
 
 
+class ServerAdmin(admin.ModelAdmin):
+    ordering = ['name']
+    search_fields = ['name']
+
+
 admin.site.register(Port, PortAdmin)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Fallout, FalloutAdmin)
+admin.site.register(Server, ServerAdmin)
 
 admin.site.site_header = "Ports Fallout Admin"
 admin.site.site_title = "Admin Ports Fallout"
