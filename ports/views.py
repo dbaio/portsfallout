@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Danilo G. Baio <dbaio@bsd.com.br>
+# Copyright (c) 2020-2021 Danilo G. Baio <dbaio@bsd.com.br>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -29,13 +29,13 @@ from ports.models import Port, Category, Fallout, Server
 from ports.serializers import CategorySerializer, PortSerializer, FalloutSerializer
 from ports.utils import IsRegex
 from rest_framework import filters, viewsets
-from datetime import date, timedelta
+from django.utils import timezone as dtz
 
 
 def dashboard(request):
     context = {}
 
-    from_date = date.today() - timedelta(days=30)
+    from_date = dtz.make_aware(dtz.datetime.today() - dtz.timedelta(days=30))
 
     fallout_cat = Fallout.objects.filter(date__gte=from_date).values('category').annotate(total=Count('category')).order_by('-total')[:20]
     context['fallout_cat'] = fallout_cat
@@ -162,7 +162,7 @@ class PortListView(ListView):
         else:
             query.add(Q(origin__icontains=port), Q.AND)
 
-        from_date = date.today() - timedelta(days=30)
+        from_date = dtz.make_aware(dtz.datetime.today() - dtz.timedelta(days=30))
         query.add(Q(fallout__date__gte=from_date), Q.AND)
 
         queryset = Port.objects.filter(query).annotate(fcount=Count('fallout')).order_by('-fcount')
