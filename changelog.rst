@@ -27,14 +27,14 @@ Version 1.5.2
 Version 1.5.1
 -------------
 
-* Add management command `clear_cache`: Clear whole cache
+* Add management command ``clear_cache``: Clear whole cache
 
 
 Version 1.5.0
 -------------
 
 * Add Server page for showing IPv4 and IPv6 connectivity
-* Add management command `server_update`:
+* Add management command ``server_update``:
   Update DNS values of the pkg-fallout servers
 * Transform script remove_old_fallouts.py as a management command
 * Add logo and favicon
