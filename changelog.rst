@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 * Use humanize filter for numbers
+* Add a message when no registry is found
 
 
 Version 1.5.4
