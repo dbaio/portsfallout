@@ -25,6 +25,7 @@
 
 <br />
 
+{% if port_list %}
 	<h3>Port List</h3>
 
 <div class="table-responsive">
@@ -52,9 +53,16 @@
 		{% bootstrap_paginate page_obj range=10 show_prev_next="true" show_first_last="true" centered="true" extra_pagination_classes="justify-content-center" %}
 </div>
 
+{% else %}
   <div class="row">
     <div class="col-md-12">
-      <br />
+      <p>No port found for this query.</p>
+    </div>
+  </div>
+{% endif %}
+
+  <div class="row">
+    <div class="col-md-12">
       <p>Filtering entries from the last 30 days.</p>
     </div>
   </div>
