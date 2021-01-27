@@ -1,5 +1,6 @@
 {% extends "ports/base.html" %}
 {% block title %}Port list{% endblock %}
+{% load humanize %}
 {% load bootstrap_pagination %}
 {% block body_block %}
 
@@ -40,7 +41,7 @@
     <tr>
       <td class="text-nowrap"><small><a href="{% url 'ports:detail' port.id  %}">{{ port.origin }}</a></small></td>
       <td class="text-nowrap"><small>{{ port.maintainer }}</small></td>
-      <td class="text-nowrap"><small>{{ port.fcount }}</small></td>
+      <td class="text-nowrap"><small>{{ port.fcount|intcomma }}</small></td>
     </tr>
 	{% endfor %}
   </tbody>

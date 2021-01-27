@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+* Use humanize filter for numbers
+
+
 Version 1.5.4
 -------------
 
