@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+Version 1.5.5
+-------------
 
 * Use humanize filter for numbers
 * Add a message when no registry is found
