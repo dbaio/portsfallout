@@ -26,17 +26,14 @@
 BASEDIR=$(dirname "$0")
 cd "$BASEDIR" || exit 1
 
-if [ "$1" = "today" ]; then
-	DATESCRAPPER=$(/bin/date +%Y%m%d)
+if [ "$1" = "lastmonth" ]; then
+	DATESCRAPPER=$(/bin/date -v-1m +%Y-%b)
 else
-	# yesterday
-	DATESCRAPPER=$(/bin/date -v-1d +%Y%m%d)
+	DATESCRAPPER=$(/bin/date +%Y-%b)
 fi
 
-CUR_TIME=$(/bin/date +%H-%M)
-
 scrapy runspider \
-	-o "scrapy_output/${DATESCRAPPER}_${CUR_TIME}.json" \
+	-O "scrapy_output/${DATESCRAPPER}.json" \
 	-a "scrapydate=${DATESCRAPPER}" \
 	--nolog \
 	pkgfallout_scrapy_spider.py
@@ -44,9 +41,6 @@ scrapy runspider \
 python3 import-scrapy.py
 
 # keep only full days for history
-if [ "$1" = "today" ]; then
-	rm -f scrapy_output/*.json
-else
-	mv scrapy_output/*.json scrapy_output/processed/
+if [ "$1" = "lastmonth" ]; then
+	mv "scrapy_output/${DATESCRAPPER}.json" scrapy_output/processed/
 fi
-

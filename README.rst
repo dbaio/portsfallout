@@ -64,7 +64,7 @@ Populate database (ports and fallout info):
 ::
 
    $ ./scripts/cron-import-index.sh
-   $ ./scripts/cron-scrapy.sh today
+   $ ./scripts/cron-scrapy.sh
 
 
 Start web-server:
@@ -80,15 +80,9 @@ You can also fetch older fallouts:
 
    $ cd scripts
 
-   Crawling messages from an specific day / Verbose
-   $ scrapy runspider -o scrapy_output/2020-07-10.json \
-      -a scrapydate=20200710 pkgfallout_scrapy_spider.py
-
-   or
-
-   Crawling messages from an entirely month (Watch out!)
-   $ scrapy runspider -o scrapy_output/2020-07.json \
-      -a scrapydate=202007 pkgfallout_scrapy_spider.py
+   Crawling messages from an specific month / Verbose
+   $ scrapy runspider -o scrapy_output/2021-May.json \
+      -a scrapydate="2021-May" pkgfallout_scrapy_spider.py
 
    Then import all .json files to database:
    $ python import-scrapy.py
@@ -108,13 +102,12 @@ Execution for keeping the database always updated:
    # Update ports tree reference in the database
    30  0  *  *  *  /portsfallout/scripts/cron-import-index.sh
 
-   # Fetch/import all pkg-fallout's reports from the Mailman archive
-   # of the previous day
+   # Fetch/import all pkg-fallout's reports from the Mlmmj archive of the
+   # current month. Requests are cached, only new fallouts are fetched.
    45  0  *  *  *  /portsfallout/scripts/cron-scrapy.sh
 
-   # Fetch/import pkg-fallout's of the current day (partials)
-   30  10  *  *  *  /portsfallout/scripts/cron-scrapy.sh today
-   30  18  *  *  *  /portsfallout/scripts/cron-scrapy.sh today
+   # Fetch/import pkg-fallout's from the last month
+   30  10  *  *  *  /portsfallout/scripts/cron-scrapy.sh lastmonth
 
    # Update DNS values of the pkg-fallout servers
    45  3  *  *  *  python manage.py server_update

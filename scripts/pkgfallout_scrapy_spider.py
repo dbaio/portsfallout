@@ -22,70 +22,90 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-Web crawling for freebsd-pkg-fallout mailman archive.
+Web crawling for freebsd-pkg-fallout mlmmj archive.
 Be nice!
 
 Execution:
 
-  - Crawling messages from day -1 / Verbose
-  $ scrapy runspider -o scrapy_output/2020-07-20.json pkgfallout_scrapy_spider.py
+  - Crawling messages from current month / Verbose
+  $ scrapy runspider -o scrapy_output/current_month.json pkgfallout_scrapy_spider.py
 
-  - Crawling messages from an specific day / Verbose
-  $ scrapy runspider -o scrapy_output/2020-07-10.json -a scrapydate=20200710 pkgfallout_scrapy_spider.py
+  - Crawling messages from specific month / Verbose
+  $ scrapy runspider -o scrapy_output/2021-May.json scrapydate="2021-May" pkgfallout_scrapy_spider.py
 
-  - Without logs
-  $ scrapy runspider -o scrapy_output/2020-07-20.json --nolog pkgfallout_scrapy_spider.py
-
-  - Crawling messages from an entirely month (Watch out!)
-  $ scrapy runspider -o scrapy_output/2020-07.json -a scrapydate=202007 pkgfallout_scrapy_spider.py
+  - Crawling messages from current month / Without logs
+  $ scrapy runspider -o scrapy_output/current_month.json --nolog pkgfallout_scrapy_spider.py
 
 """
 
 import scrapy
 import re
 from datetime import datetime, timedelta
+from scrapy.utils.httpobj import urlparse_cached
+
+# https://github.com/scrapy/scrapy/blob/master/scrapy/extensions/httpcache.py#L23
+class CustomPolicyPkgFallout(object):
+
+    def __init__(self, settings):
+        self.ignore_schemes = settings.getlist('HTTPCACHE_IGNORE_SCHEMES')
+        self.ignore_http_codes = [int(x) for x in settings.getlist('HTTPCACHE_IGNORE_HTTP_CODES')]
+
+    def should_cache_request(self, request):
+        if request.url.split("/")[-1] == 'index.html':
+            # Do not cache index.html
+            return False
+        return urlparse_cached(request).scheme not in self.ignore_schemes
+
+    def should_cache_response(self, response, request):
+        return response.status not in self.ignore_http_codes
+
+    def is_cached_response_fresh(self, cachedresponse, request):
+        return True
+
+    def is_cached_response_valid(self, cachedresponse, response, request):
+        return True
+
 
 class PkgfalloutScrapySpider(scrapy.Spider):
     name = "pkgfallout_scrapy"
 
-    def start_requests(self):
-        yesterday = datetime.now() - timedelta(days=1)
-        yesterday_raw = yesterday.strftime('%Y%m%d')
+    custom_settings = {
+        'HTTPCACHE_ENABLED': True,
+        'HTTPCACHE_GZIP': True,
+        'HTTPCACHE_POLICY': CustomPolicyPkgFallout,
+    }
 
-        url = 'https://lists.freebsd.org/pipermail/freebsd-pkg-fallout/'
-        scrapydate = getattr(self, 'scrapydate', yesterday_raw)
-        self.regex_pattern = '^' + scrapydate + '.*'
+    def start_requests(self):
+        cur_month_raw = datetime.now()
+        cur_month = cur_month_raw.strftime('%Y-%b')
+
+        scrapydate = getattr(self, 'scrapydate', cur_month)
+        url = 'https://lists.freebsd.org/archives/freebsd-pkg-fallout/' + scrapydate + '/index.html'
+
+        self.regex_pattern = '^[0-9]+.html'
         yield scrapy.Request(url=url, callback=self.parse)
 
 
     def parse(self, response):
-        # Mailman Archive Index
-        for t_row in response.css('table tr td a'):
-            if t_row.css('a::text').re(r'Thread'):
+        # Mlmmj Archive Index
+        for t_row in response.css('ul li'):
+            if t_row.css('a::attr(href)').re(r'^[0-9]+.html'):
                 link_pattern = t_row.css('a::attr(href)').get()
                 if re.search(self.regex_pattern, link_pattern):
-                    yield response.follow(link_pattern, callback=self.parse_issue_thread)
+                    yield response.follow(link_pattern, callback=self.parse_mail)
 
 
-    def parse_issue_thread(self, response):
-        # Mailman Date Thread
-        for li in response.css('ul li a'):
-            if li.css('a::text').re(r'\[package.*'):
-                sublink = li.css('a::attr(href)').get()
-                yield response.follow(sublink, callback=self.parse_issue)
-
-
-    def parse_issue(self, response):
-        # Mailman Issue Message
-        if response.css('body b::text')[0].re(r'pkg-fallout'):
+    def parse_mail(self, response):
+        # Mlmmj Message
+        if (response.xpath("//meta[@name='Author']/@content")[0].re(r'^pkg-fallout') and
+                response.xpath("//meta[@name='Subject']/@content")[0].re(r'^\[package')):
             yield {
-                'description': response.css('title::text').get(),
-                'date': response.css('body i::text').get(),
-                'maintainer': response.css('body pre a::text')[0].get(),
-                'last_committer': response.css('body pre a::text')[1].get(),
-                'log_url': response.css('body pre a::text')[2].get(),
-                'build_url': response.css('body pre a::text')[3].get(),
+                'description': response.css('body div.head h1::text').get(),
+                'date': response.css('body div.mail span#date::text').get().split(': ')[-1],
+                'maintainer': response.css('body div.mail pre').re_first(r'Maintainer:\s*(.*)').replace('_at_','@'),
+                'last_committer': '',
+                'log_url': response.css('body div.mail pre').re_first(r'Log URL:\s*(.*)'),
+                'build_url': response.css('body div.mail pre').re_first(r'Build URL:\s*(.*)'),
                 'flavor': response.css('body pre::text').re_first(r'FLAVOR=.*').split('=')[-1],
                 'report_url': response.url,
             }
-

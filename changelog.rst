@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 * Model/Fallout: Increase version's size
+* Add support to Mlmmj
 
 
 Version 1.5.5

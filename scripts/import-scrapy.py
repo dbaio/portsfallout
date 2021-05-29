@@ -35,16 +35,21 @@ from ports.models import Port, Fallout
 
 
 def process_mail(raw_email):
-    email_pieces = raw_email.split()
-    user = email_pieces[0]
-    domain = email_pieces[-1]
-    return user + "@" + domain
+    email_pieces = raw_email.split(' ')
+
+    # mlmmj
+    if len(email_pieces) == 1:
+        return email_pieces[0]
+    else:
+        # mailman
+        user = email_pieces[0]
+        domain = email_pieces[-1]
+        return user + "@" + domain
 
 
 def read_scrapy_json():
     path = 'scrapy_output/'
     json_list_files = [f for f in os.listdir(path) if f.endswith('.json')]
-    #json_list_files = "20200710.json"
 
     for json_file in json_list_files:
         with open(path + json_file, "r") as read_file:
@@ -83,7 +88,7 @@ def read_scrapy_json():
                                                         last_committer=process_mail(row['last_committer']),
                                                         date=i_date,
                                                         log_url=row['log_url'],
-                                                        build_url=row['build_url'],
+                                                        build_url=row['build_url'].replace('&amp;','&'),
                                                         report_url=row['report_url'],
                                                         server=i_server,
                                                         defaults={'flavor': row['flavor']},)
