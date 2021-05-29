@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+* Model/Fallout: Increase version's size
+
+
 Version 1.5.5
 -------------
 

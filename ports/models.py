@@ -52,7 +52,7 @@ class Port(models.Model):
 class Fallout(models.Model):
     port = models.ForeignKey(Port, on_delete=models.CASCADE)
     env = models.CharField(max_length=48)
-    version = models.CharField(max_length=24)
+    version = models.CharField(max_length=48)
     category = models.CharField(max_length=48)
     maintainer = models.EmailField()
     last_committer = models.EmailField()
