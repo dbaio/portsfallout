@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+Version 1.6.0
+-------------
 
 * Model/Fallout: Increase version's size
 * Add support to Mlmmj
