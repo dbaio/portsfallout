@@ -81,7 +81,7 @@ You can also fetch older fallouts:
    $ cd scripts
 
    Crawling messages from an specific month / Verbose
-   $ scrapy runspider -o scrapy_output/2021-May.json \
+   $ scrapy runspider -O scrapy_output/2021-May.json \
       -a scrapydate="2021-May" pkgfallout_scrapy_spider.py
 
    Then import all .json files to database:

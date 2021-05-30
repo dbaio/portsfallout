@@ -28,13 +28,13 @@ Be nice!
 Execution:
 
   - Crawling messages from current month / Verbose
-  $ scrapy runspider -o scrapy_output/current_month.json pkgfallout_scrapy_spider.py
+  $ scrapy runspider -O scrapy_output/current_month.json pkgfallout_scrapy_spider.py
 
   - Crawling messages from specific month / Verbose
-  $ scrapy runspider -o scrapy_output/2021-May.json scrapydate="2021-May" pkgfallout_scrapy_spider.py
+  $ scrapy runspider -O scrapy_output/2021-May.json -a scrapydate="2021-May" pkgfallout_scrapy_spider.py
 
   - Crawling messages from current month / Without logs
-  $ scrapy runspider -o scrapy_output/current_month.json --nolog pkgfallout_scrapy_spider.py
+  $ scrapy runspider -O scrapy_output/current_month.json --nolog pkgfallout_scrapy_spider.py
 
 """
 
