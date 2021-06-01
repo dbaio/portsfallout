@@ -27,9 +27,9 @@ BASEDIR=$(dirname "$0")
 cd "$BASEDIR" || exit 1
 
 if [ "$1" = "lastmonth" ]; then
-	DATESCRAPPER=$(/bin/date -v-1m +%Y-%b)
+	DATESCRAPPER=$(/bin/date -v-1m +%Y-%B)
 else
-	DATESCRAPPER=$(/bin/date +%Y-%b)
+	DATESCRAPPER=$(/bin/date +%Y-%B)
 fi
 
 scrapy runspider \
