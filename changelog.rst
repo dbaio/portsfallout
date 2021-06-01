@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 1.6.1
+-------------
+
+* Django/Models: set implicitly Models AutoField
+* cron-scrapy.sh: Remove scrapy json file
+* cron-scrapy.sh: Use full month name
+
+
 Version 1.6.0
 -------------
 
