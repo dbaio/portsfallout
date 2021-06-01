@@ -43,4 +43,6 @@ python3 import-scrapy.py
 # keep for history
 if [ "$1" = "lastmonth" ]; then
 	mv "scrapy_output/${DATESCRAPPER}.json" scrapy_output/processed/
+else
+	rm -f "scrapy_output/${DATESCRAPPER}.json"
 fi
