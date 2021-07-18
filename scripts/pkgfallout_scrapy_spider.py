@@ -77,7 +77,7 @@ class PkgfalloutScrapySpider(scrapy.Spider):
 
     def start_requests(self):
         cur_month_raw = datetime.now()
-        cur_month = cur_month_raw.strftime('%Y-%b')
+        cur_month = cur_month_raw.strftime('%Y-%B')
 
         scrapydate = getattr(self, 'scrapydate', cur_month)
         url = 'https://lists.freebsd.org/archives/freebsd-pkg-fallout/' + scrapydate + '/index.html'
