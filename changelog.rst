@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version 1.6.2
+-------------
+
+* pkgfallout_scrapy_spider.py: Use full month name
+* about: Fix freebsd-pkg-fallout URL
+
+
 Version 1.6.1
 -------------
 
