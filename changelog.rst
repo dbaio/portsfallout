@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+* Update third party plugins
+
 Version 1.6.2
 -------------
 
