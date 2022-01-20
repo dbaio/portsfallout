@@ -18,10 +18,12 @@ Install all requirements:
 
 ::
 
-   django
-   django-bootstrap-pagination
-   requests
-   scrapy
+    django
+    requests
+    scrapy
+    djangorestframework
+    python-dateutil
+    dnspython
 
 
 Copy the sample ``settings.py`` and configure your database access:

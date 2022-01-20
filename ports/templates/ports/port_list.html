@@ -1,7 +1,6 @@
 {% extends "ports/base.html" %}
 {% block title %}Port list{% endblock %}
 {% load humanize %}
-{% load bootstrap_pagination %}
 {% block body_block %}
 
 <br />
@@ -49,9 +48,39 @@
 </table>
 </div>
 
-<div class="centerstage">
-		{% bootstrap_paginate page_obj range=10 show_prev_next="true" show_first_last="true" centered="true" extra_pagination_classes="justify-content-center" %}
-</div>
+{% if is_paginated %}
+    <ul class="pagination">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a href="?page={{ page_obj.previous_page_number }}" class="page-link">&laquo;</a>
+        </li>
+        <li>
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">{{ page_obj.previous_page_number }}</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">&laquo;</span>
+        </li>
+      {% endif %}
+
+      <li class="page-item active">
+        <span class="page-link">{{ page_obj.number }}</span>
+      </li>
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">{{ page_obj.next_page_number }}</a>
+        </li>
+        <li class="page-item ">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">&raquo</span>
+        </li>
+      {% endif %}
+    </ul>
+{% endif %}
 
 {% else %}
   <div class="row">

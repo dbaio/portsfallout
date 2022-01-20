@@ -64,7 +64,6 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'rest_framework',
     'debug_toolbar',
-    'bootstrap_pagination',
     'ports',
 ]
 
