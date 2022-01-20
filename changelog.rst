@@ -1,10 +1,11 @@
 Changelog
 =========
 
-Unreleased
-----------
+Version 1.6.3
+-------------
 
 * Update third party plugins
+* Remove django-bootstrap-pagination, package is currently unmaintained
 
 Version 1.6.2
 -------------
