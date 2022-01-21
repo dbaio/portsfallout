@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+* template: Combine common pagination code
+
 Version 1.6.3
 -------------
 
