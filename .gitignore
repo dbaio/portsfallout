@@ -152,3 +152,4 @@ scripts/scrapy_output/*.json
 scripts/scrapy_output/processed/*.json
 .vscode
 .idea
+.DS_Store

@@ -97,15 +97,16 @@ class PkgfalloutScrapySpider(scrapy.Spider):
 
     def parse_mail(self, response):
         # Mlmmj Message
-        if (response.xpath("//meta[@name='Author']/@content")[0].re(r'^pkg-fallout') and
+        if (response.xpath("//meta[@name='Author']/@content")[0].re(r'pkg-fallout') and
                 response.xpath("//meta[@name='Subject']/@content")[0].re(r'^\[package')):
+
             yield {
-                'description': response.css('body div.head h1::text').get(),
-                'date': response.css('body div.mail span#date::text').get().split(': ')[-1],
-                'maintainer': response.css('body div.mail pre').re_first(r'Maintainer:\s*(.*)').replace('_at_','@'),
+                'description': response.css('title::text').get(),
+                'date': response.css('body article').re_first(r'Date:\s*(.*)').replace('</i></strong> ', '').replace(' <br>', ''),
+                'maintainer': response.css('body article').re_first(r'Maintainer:\s*(.*)').replace('_at_','@'),
                 'last_committer': '',
-                'log_url': response.css('body div.mail pre').re_first(r'Log URL:\s*(.*)'),
-                'build_url': response.css('body div.mail pre').re_first(r'Build URL:\s*(.*)'),
-                'flavor': response.css('body pre::text').re_first(r'FLAVOR=.*').split('=')[-1],
+                'log_url': response.css('body article').re_first(r'Log URL:\s*(.*)'),
+                'build_url': response.css('body article').re_first(r'Build URL:\s*(.*)').replace('&amp;', '&'),
+                'flavor': response.css('body article').re_first(r'FLAVOR=.*').split('=')[-1].replace('<br>',''),
                 'report_url': response.url,
             }
