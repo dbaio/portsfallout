@@ -1,10 +1,11 @@
 Changelog
 =========
 
-Unreleased
-----------
+Version 1.6.4
+-------------
 
 * template: Combine common pagination code
+* Update crawler following upstream changes
 
 Version 1.6.3
 -------------
