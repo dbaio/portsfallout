@@ -1,6 +1,7 @@
 {% extends "ports/base.html" %}
 {% block title %}Port detail - {{port.origin}}{% endblock %}
 {% block body_block %}
+{% load proxy %}
 
 <br />
 <h1>Port detail:</h1>
@@ -54,6 +55,7 @@
       <td class="text-nowrap"><small>{{ fallout.date | date:"Y-m-d H:i" }}</small></td>
       <td class="text-nowrap">
         <a href="{{fallout.log_url }}" class="badge badge-danger">log</a>
+        <a href="{{fallout.log_url | get_proxy }}" class="badge badge-secondary">log v4</a>
         <a href="{{fallout.report_url }}" class="badge badge-info">report</a>
         <a href="{{fallout.build_url }}" class="badge badge-secondary">build queue</a>
       </td>
