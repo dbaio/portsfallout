@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 1.6.6
+-------------
+
+* Remove IPv4 proxy links to logs
+
 Version 1.6.5
 -------------
 
