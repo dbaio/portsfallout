@@ -1,7 +1,6 @@
 {% extends "ports/base.html" %}
 {% block title %}Server list{% endblock %}
 {% block body_block %}
-{% load proxy %}
 
 <br />
 
@@ -13,7 +12,6 @@
     <tr>
       <th scope="col" class="text-nowrap">server</th>
       <th scope="col" class="text-nowrap">connectivity</th>
-      <th scope="col" class="text-nowrap">IPv4 proxy</th>
     </tr>
   </thead>
   <tbody>
@@ -34,7 +32,6 @@
         {% endif %}
         </small>
       </td>
-      <td class="text-nowrap"><small><a href="https://pkg-status.freebsd.org/{{ server.name | get_short_name }}/">pkg-status.freebsd.org/{{ server.name | get_short_name }}/</a></small></td>
     </tr>
 	{% endfor %}
   </tbody>
