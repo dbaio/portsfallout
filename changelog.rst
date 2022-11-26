@@ -7,6 +7,7 @@ Unreleased
 * Remove deprecated parser module
 * Remove deprecated Django ifnotequal
 * Unpin Django<4
+* Update Bootstrap to v4.6.2
 
 Version 1.6.6
 -------------
