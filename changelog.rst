@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 * Remove deprecated parser module
+* Remove deprecated Django ifnotequal
 
 Version 1.6.6
 -------------
