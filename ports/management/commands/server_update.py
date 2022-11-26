@@ -21,13 +21,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.core.management.base import BaseCommand, CommandError
-from ports.models import Server, Fallout
-
+import dns.resolver
+from django.core.management.base import BaseCommand
 from django.utils import timezone as dtz
 
-import parser
-import dns.resolver
+from ports.models import Server, Fallout
 
 
 class Command(BaseCommand):
