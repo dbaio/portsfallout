@@ -7,8 +7,8 @@ Unreleased
 * Remove deprecated parser module
 * Remove deprecated Django ifnotequal
 * Unpin Django<4
-* Update Bootstrap to v4.6.2
-* Update Chart.js to v4.0.1
+* Update third party plugins
+* Dashboard: Use a bar graph for better visualization
 
 Version 1.6.6
 -------------
