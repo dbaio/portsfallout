@@ -6,6 +6,7 @@ Unreleased
 
 * Remove deprecated parser module
 * Remove deprecated Django ifnotequal
+* Unpin Django<4
 
 Version 1.6.6
 -------------
