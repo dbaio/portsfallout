@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+Version 1.7.0
+-------------
 
 * Remove deprecated parser module
 * Remove deprecated Django ifnotequal
