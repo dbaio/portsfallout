@@ -1,6 +1,7 @@
 {% extends "ports/base.html" %}
 {% block title %}Server list{% endblock %}
 {% block body_block %}
+{% load proxy %}
 
 <br />
 
@@ -30,6 +31,7 @@
         {% else %}
             <span class="badge badge-danger">IPv6</span>
         {% endif %}
+            <a href="https://pkg-status.freebsd.org/{{ server.name | get_short_name }}/" class="badge badge-secondary">IPv4 Proxy</a>
         </small>
       </td>
     </tr>

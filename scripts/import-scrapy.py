@@ -68,7 +68,10 @@ def read_scrapy_json():
                 i_version += row_list[6]
 
             try:
-                i_server = row['log_url'].split('/')[2]
+                if row['log_url'].split('/')[2] == "pkg-status.freebsd.org":
+                    i_server = row['log_url'].split('/')[3] + '.nyi.freebsd.org'
+                else:
+                    i_server = row['log_url'].split('/')[2]
             except:
                 i_server = ""
 
