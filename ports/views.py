@@ -82,11 +82,11 @@ class FalloutListView(ListView):
     ordering = ['-date']
 
     def get_queryset(self):
-        maintainer = self.request.GET.get('maintainer', '')
-        port = self.request.GET.get('port', '')
-        env = self.request.GET.get('env', '')
-        category = self.request.GET.get('category', '')
-        flavor = self.request.GET.get('flavor', '')
+        maintainer = self.request.GET.get('maintainer', '').strip()
+        port = self.request.GET.get('port', '').strip()
+        env = self.request.GET.get('env', '').strip()
+        category = self.request.GET.get('category', '').strip()
+        flavor = self.request.GET.get('flavor', '').strip()
         categories = self.request.GET.getlist('categories')
 
         if IsRegex(maintainer):
