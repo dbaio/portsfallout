@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 1.7.1
+-------------
+
+* Remove whitespaces from single words searches
+* scrapy: Get the correct server information
+
 Version 1.7.0
 -------------
 
