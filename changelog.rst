@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 1.7.2
+-------------
+
+* Improve paginator
+* Display the object count on the list pages
+* scrapy: Prepare to reprocess entries and fix server info
+* Dashboard: Reword phrases
+
 Version 1.7.1
 -------------
 
