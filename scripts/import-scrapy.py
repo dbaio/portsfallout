@@ -97,8 +97,16 @@ def read_scrapy_json():
                                                         defaults={'flavor': row['flavor']},)
 
                 if not created:
+                    changed_fields: int = 0
                     if fallout.flavor != row['flavor']:
                         fallout.flavor = row['flavor']
+                        changed_fields += 1
+
+                    if fallout.server != i_server:
+                        fallout.server = i_server
+                        changed_fields += 1
+
+                    if changed_fields > 0:
                         fallout.save()
 
 
