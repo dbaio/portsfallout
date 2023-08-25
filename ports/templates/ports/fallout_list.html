@@ -1,5 +1,6 @@
 {% extends "ports/base.html" %}
 {% block title %}Fallout list{% endblock %}
+{% load humanize %}
 {% block body_block %}
 
 <br />
@@ -48,7 +49,10 @@
   </div>
   <button type="submit" class="btn btn-primary btn-sm">Filter</button>
   <small class="text-muted">
-    Regular expressions are permitted
+{% if page_obj.paginator.count > 1 %}
+    There are {{ page_obj.paginator.count|intcomma }} entries in the current filter.
+{% endif %}
+    Regular expressions are allowed for filtering.
   </small>
 </form>
 
