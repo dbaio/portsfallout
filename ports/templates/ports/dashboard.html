@@ -125,11 +125,11 @@
   <div class="row">
     <div class="col-md-12">
       <br />
-      <p>Filtering entries from the last 30 days, total of <strong>{{ fallout_count_recent|intcomma }}
-        </strong> fallout's.</p>
-      <p>Oldest fallout <strong>{{ fallout_oldest.date | date:"Y-m-d H:i" }}</strong> and the
-        most recent <strong>{{ fallout_recent.date | date:"Y-m-d H:i" }}</strong> in the database,
-        total of <strong>{{ fallout_count|intcomma }}</strong>.</p>
+      <p>Filtering entries from the last 30 days, there are a total of <strong>{{ fallout_count_recent|intcomma }}
+        </strong> instances of pkg-fallout.</p>
+      <p>The oldest pkg-fallout recorded in the database is from <strong>{{ fallout_oldest.date | date:"Y-m-d H:i" }}</strong>,
+          and the most recent one is from <strong>{{ fallout_recent.date | date:"Y-m-d H:i" }}</strong>,
+          resulting in a total of <strong>{{ fallout_count|intcomma }}</strong> instances.</p>
     </div>
   </div>
 
