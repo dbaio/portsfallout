@@ -93,8 +93,9 @@ def read_scrapy_json():
                                                         log_url=row['log_url'],
                                                         build_url=row['build_url'].replace('&amp;','&'),
                                                         report_url=row['report_url'],
-                                                        server=i_server,
-                                                        defaults={'flavor': row['flavor']},)
+                                                        defaults={'flavor': row['flavor'],
+                                                                  'server': i_server}
+                                                        ,)
 
                 if not created:
                     changed_fields: int = 0
