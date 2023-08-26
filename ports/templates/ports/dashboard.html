@@ -54,7 +54,7 @@
         {% for obj in fallout_env %}
         <tr>
           <td><a href="{% url 'ports:fallout' %}?env={{ obj.env|urlencode:"" }}">{{ obj.env }}</a></td>
-          <td>{{ obj.total|intcomma }}</td>
+          <td><small class="text-muted">{{ obj.total|intcomma }}/{{ obj.total_ports|intcomma }}</small></td>
         </tr>
         {% endfor %}
         </tbody>
@@ -72,7 +72,7 @@
         {% for category in fallout_cat %}
         <tr>
           <td><a href="{% url 'ports:fallout' %}?category={{ category.category|urlencode:"" }}">{{ category.category }}</a></td>
-          <td>{{ category.total|intcomma }}</td>
+            <td><small class="text-muted">{{ category.total|intcomma }}/{{ category.total_ports|intcomma }}</small></td>
         </tr>
         {% endfor %}
         </tbody>
@@ -90,7 +90,7 @@
         {% for flavor in fallout_flavor %}
         <tr>
           <td><a href="{% url 'ports:fallout' %}?flavor={{ flavor.flavor|urlencode:"" }}">{{ flavor.flavor }}</a></td>
-          <td>{{ flavor.total|intcomma }}</td>
+            <td><small class="text-muted">{{ flavor.total|intcomma }}/{{ flavor.total_ports|intcomma }}</small></td>
         </tr>
         {% endfor %}
         </tbody>
@@ -108,11 +108,17 @@
         {% for obj in fallout_main %}
           <tr>
             <td><a href="{% url 'ports:fallout' %}?maintainer={{ obj.maintainer|urlencode:"" }}">{{ obj.maintainer }}</a></td>
-            <td>{{ obj.total|intcomma }}</td>
+              <td><small class="text-muted">{{ obj.total|intcomma }}/{{ obj.total_ports|intcomma }}</small></td>
           </tr>
         {% endfor %}
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+        <p><small class="text-muted">XXX/YYY --> pkg-fallout count/unique ports</small></p>
     </div>
   </div>
 

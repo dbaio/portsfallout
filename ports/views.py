@@ -37,16 +37,16 @@ def dashboard(request):
 
     from_date = dtz.make_aware(dtz.datetime.today() - dtz.timedelta(days=30))
 
-    fallout_cat = Fallout.objects.filter(date__gte=from_date).values('category').annotate(total=Count('category')).order_by('-total')[:20]
+    fallout_cat = Fallout.objects.filter(date__gte=from_date).values('category').annotate(total=Count('category'), total_ports=Count('port', distinct=True)).order_by('-total')[:20]
     context['fallout_cat'] = fallout_cat
 
-    fallout_env = Fallout.objects.filter(date__gte=from_date).values('env').annotate(total=Count('env')).order_by('-total')[:20]
+    fallout_env = Fallout.objects.filter(date__gte=from_date).values('env').annotate(total=Count('env'), total_ports=Count('port', distinct=True)).order_by('-total')[:20]
     context['fallout_env'] = fallout_env
 
-    fallout_main = Fallout.objects.filter(date__gte=from_date).values('maintainer').annotate(total=Count('maintainer')).order_by('-total')[:20]
+    fallout_main = Fallout.objects.filter(date__gte=from_date).values('maintainer').annotate(total=Count('maintainer'), total_ports=Count('port', distinct=True)).order_by('-total')[:20]
     context['fallout_main'] = fallout_main
 
-    fallout_flavor = Fallout.objects.filter(date__gte=from_date).values('flavor').exclude(flavor__exact='').annotate(total=Count('flavor')).order_by('-total')[:20]
+    fallout_flavor = Fallout.objects.filter(date__gte=from_date).values('flavor').exclude(flavor__exact='').annotate(total=Count('flavor'), total_ports=Count('port', distinct=True)).order_by('-total')[:20]
     context['fallout_flavor'] = fallout_flavor
 
     fallout_count_recent = Fallout.objects.filter(date__gte=from_date).count()
