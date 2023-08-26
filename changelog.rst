@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 1.7.3
+-------------
+
+* Dashboard: Show unique ports count
+* scrapy: Fix duplicate entries issue
+
 Version 1.7.2
 -------------
 
