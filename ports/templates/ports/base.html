@@ -8,6 +8,13 @@
         {% block title %}{% endblock %} - FreeBSD pkg-fallout
       </title>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+        <style>
+            .dropdown-item.active, .dropdown-item:active {
+                background-color: #e9ecef;
+                text-decoration: none;
+                color: #212529;
+            }
+        </style>
 
       <!-- favicon -->
       <link rel="apple-touch-icon" sizes="120x120" href="{% static "/apple-touch-icon.png" %}">
@@ -26,9 +33,17 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
-          <li class="nav-item {{ navbar_fallout }}">
-            <a class="nav-link" href="{% url 'ports:fallout' %}">Fallouts</a>
+
+          <li class="nav-item dropdown {{ navbar_fallout }} {{ navbar_fallout_be }}">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Fallouts
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <a class="dropdown-item {{ navbar_fallout }}" href="{% url 'ports:fallout' %}">all pkg-fallouts</a>
+                <a class="dropdown-item {{ navbar_fallout_be }}" href="{% url 'ports:build_env' %}">by build environment</a>
+            </div>
           </li>
+
           <li class="nav-item {{ navbar_list }}">
             <a class="nav-link" href="{% url 'ports:list' %}">Ports</a>
           </li>

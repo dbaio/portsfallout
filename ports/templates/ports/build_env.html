@@ -1,0 +1,42 @@
+{% extends "ports/base.html" %}
+{% block title %}Build env list{% endblock %}
+{% load humanize %}
+{% block body_block %}
+
+<br />
+
+{% if fallout_env %}
+	<h3>Fallout List by Build Environment</h3>
+
+<div class="table-responsive">
+<table class="table table-sm table-striped">
+  <thead>
+        <tr>
+            <th class="text-nowrap">build environment</th>
+            <th class="text-nowrap">pkg-fallout count</th>
+            <th class="text-nowrap">unique ports</th>
+        </tr>
+  </thead>
+  <tbody>
+	{% for obj in fallout_env %}
+        <tr>
+            <td class="text-nowrap"><small><a href="{% url 'ports:fallout' %}?env={{ obj.env|urlencode:"" }}">{{ obj.env }}</a></small></td>
+            <td class="text-nowrap"><small>{{ obj.total|intcomma }}</small></td>
+            <td class="text-nowrap"><small>{{ obj.total_ports|intcomma }}</small></td>
+        </tr>
+	{% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% endif %}
+
+<div class="row">
+    <div class="col-md-12">
+      <br />
+      <p>This page provides an overview of pkg-fallout quantities based on the build environment.
+          It filters all pkg-fallouts stored in the database, which encompasses the last four to five months.</p>
+    </div>
+</div>
+
+{% endblock %}

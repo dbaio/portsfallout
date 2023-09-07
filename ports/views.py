@@ -76,6 +76,24 @@ def dashboard(request):
     return render(request, 'ports/dashboard.html', context)
 
 
+def build_env(request):
+    context = {}
+
+    context['navbar_fallout_be'] = 'active'
+
+    fallout_env = Fallout.objects.all().values('env').annotate(total=Count('env'), total_ports=Count('port', distinct=True)).order_by('env')
+
+    context['fallout_env'] = fallout_env
+
+    fallout_recent = Fallout.objects.all().values().order_by('-date')[0]
+    context['fallout_recent'] = fallout_recent
+
+    fallout_oldest = Fallout.objects.all().values().order_by('date')[0]
+    context['fallout_oldest'] = fallout_oldest
+
+    return render(request, 'ports/build_env.html', context)
+
+
 class FalloutListView(ListView):
     paginate_by = 50
     model = Fallout
