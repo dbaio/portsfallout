@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+* navbar: Add missing option for the new maintainer page
+
 Version 1.8.0
 -------------
 
