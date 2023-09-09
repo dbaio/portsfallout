@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 * navbar: Add missing option for the new maintainer page
+* cmd/server_update: Process by default only the latest 60 days
 
 Version 1.8.0
 -------------

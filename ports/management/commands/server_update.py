@@ -43,7 +43,7 @@ class Command(BaseCommand):
         verbosity = options.get('verbosity')
 
         if not options['period']:
-            period = 90
+            period = 60
         else:
             period = options['period']
 
