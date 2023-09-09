@@ -85,14 +85,18 @@ def build_env(request):
 
     context['fallout_env'] = fallout_env
 
-    fallout_recent = Fallout.objects.all().values().order_by('-date')[0]
-    context['fallout_recent'] = fallout_recent
-
-    fallout_oldest = Fallout.objects.all().values().order_by('date')[0]
-    context['fallout_oldest'] = fallout_oldest
-
     return render(request, 'ports/build_env.html', context)
 
+
+def maintainer(request):
+    context = {}
+
+    context['navbar_fallout_mt'] = 'active'
+
+    maintainers = Fallout.objects.all().values('maintainer').annotate(total=Count('maintainer'), total_ports=Count('port', distinct=True)).order_by('-total')
+    context['fallout_maintainers'] = maintainers
+
+    return render(request, 'ports/maintainer.html', context)
 
 class FalloutListView(ListView):
     paginate_by = 50

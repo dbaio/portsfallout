@@ -38,6 +38,7 @@ app_name = 'ports'
 urlpatterns = [
     path('', views.dashboard, name='index'),
     path('build_env', views.build_env, name='build_env'),
+    path('maintainer', views.maintainer, name='maintainer'),
     path('fallout', views.FalloutListView.as_view(), name='fallout'),
     path('fallout/<int:pk>/', views.FalloutDetailView.as_view(), name='fdetail'),
     path('port', views.PortListView.as_view(), name='list'),

@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 * Add a page to show an overview count by build environment and unique ports
+* Add a page to show an overview count by maintainer and unique ports
 * Track build environments per server
 
 Version 1.7.3
