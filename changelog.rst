@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+Version 1.8.0
+-------------
 
 * Add a page to show an overview count by build environment and unique ports
 * Add a page to show an overview count by maintainer and unique ports
