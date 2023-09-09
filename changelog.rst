@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Unreleased
+Version 1.8.1
 ----------
 
 * navbar: Add missing option for the new maintainer page
