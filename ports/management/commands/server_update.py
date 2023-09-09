@@ -25,7 +25,7 @@ import dns.resolver
 from django.core.management.base import BaseCommand
 from django.utils import timezone as dtz
 
-from ports.models import Server, Fallout
+from ports.models import Server, Fallout, BuildEnv
 
 
 class Command(BaseCommand):
@@ -92,3 +92,13 @@ class Command(BaseCommand):
                     db_srv = Server.objects.get_or_create(name=srv['server'],
                                     v4 = bool(dns_v4),
                                     v6 = bool(dns_v6))[0]
+
+                # Add build envs to the server
+                srv_envs = Fallout.objects.filter(date__gte=period_date, server=srv['server']).values('env').distinct().order_by('env')
+                for env in srv_envs:
+                    env_obj = add_build_env(env['env'])
+                    db_srv.envs.add(env_obj)
+
+def add_build_env(name):
+    e = BuildEnv.objects.get_or_create(name=name)[0]
+    return e

@@ -68,10 +68,21 @@ class Fallout(models.Model):
         return self.env + " | " + self.port.origin
 
 
+class BuildEnv(models.Model):
+    name = models.CharField(max_length=48, unique=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = "Envs"
+
+
 class Server(models.Model):
     name = models.CharField(max_length=48, unique=True)
     v4 = models.BooleanField(default=False)
     v6 = models.BooleanField(default=False)
+    envs = models.ManyToManyField(BuildEnv)
 
     def __str__(self):
         return self.name

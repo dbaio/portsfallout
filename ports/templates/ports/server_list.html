@@ -2,6 +2,7 @@
 {% block title %}Server list{% endblock %}
 {% block body_block %}
 {% load proxy %}
+{% load link_badge %}
 
 <br />
 
@@ -12,6 +13,7 @@
   <thead>
     <tr>
       <th scope="col" class="text-nowrap">server</th>
+      <th scope="col">build environment</th>
       <th scope="col" class="text-nowrap">connectivity</th>
     </tr>
   </thead>
@@ -19,6 +21,13 @@
 	{% for server in server_list %}
     <tr>
       <td class="text-nowrap"><small><a href="http://{{ server.name }}">{{ server.name }}</a></small></td>
+      <td>
+          <small>
+            {% for srv_env in server.envs.all %}
+                <a href="{% url 'ports:fallout' %}?env={{ srv_env|urlencode:"" }}" class="badge {{ forloop.counter | get_link_badge }}">{{ srv_env }}</a>
+            {% endfor %}
+          </small>
+      </td>
       <td class="text-nowrap"><small>
         {% if server.v4 %}
             <span class="badge badge-success">IPv4</span>

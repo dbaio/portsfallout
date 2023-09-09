@@ -22,7 +22,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.contrib import admin
-from ports.models import Category, Port, Fallout, Server
+from ports.models import Category, Port, Fallout, Server, BuildEnv
 
 
 class PortAdmin(admin.ModelAdmin):
@@ -53,6 +53,10 @@ class ServerAdmin(admin.ModelAdmin):
     ordering = ['name']
     search_fields = ['name']
 
+
+class BuildEnvAdmin(admin.ModelAdmin):
+    ordering = ['name']
+    search_fields = ['name']
 
 admin.site.register(Port, PortAdmin)
 admin.site.register(Category, CategoryAdmin)
