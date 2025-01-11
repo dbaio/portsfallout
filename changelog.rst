@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 1.8.2
+----------
+
+* Open log links in a new window
+* Fix the server import/match issue
+
 Version 1.8.1
 ----------
 
