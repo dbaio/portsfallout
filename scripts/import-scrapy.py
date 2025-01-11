@@ -48,6 +48,39 @@ def process_mail(raw_email):
 
 
 def read_scrapy_json():
+
+    # From https://github.com/freebsd/pkg-status/blob/master/servers.txt
+    server_dict = {
+        'package18': 'package18.nyi.freebsd.org',
+        'package19': 'package19.nyi.freebsd.org',
+        'package20': 'package20.nyi.freebsd.org',
+        'package21': 'package21.nyi.freebsd.org',
+        'package22': 'package22.nyi.freebsd.org',
+        'package23': 'package23.nyi.freebsd.org',
+        'gohan01': 'gohan01.nyi.freebsd.org',
+        'gohan02': 'gohan02.nyi.freebsd.org',
+        'gohan03': 'gohan03.nyi.freebsd.org',
+        'gohan04': 'gohan04.nyi.freebsd.org',
+        'gohan05': 'gohan05.nyi.freebsd.org',
+        'gohan06': 'gohan06.chi.freebsd.org',
+        'beefy7': 'beefy7.nyi.freebsd.org',
+        'beefy8': 'beefy8.nyi.freebsd.org',
+        'beefy11': 'beefy11.nyi.freebsd.org',
+        'beefy13': 'beefy13.nyi.freebsd.org',
+        'beefy14': 'beefy14.nyi.freebsd.org',
+        'beefy15': 'beefy15.nyi.freebsd.org',
+        'beefy16': 'beefy16.nyi.freebsd.org',
+        'beefy17': 'beefy17.nyi.freebsd.org',
+        'beefy18': 'beefy18.nyi.freebsd.org',
+        'beefy19': 'beefy19.nyi.freebsd.org',
+        'ampere1': 'ampere1.nyi.freebsd.org',
+        'ampere2': 'ampere2.nyi.freebsd.org',
+        'ampere3': 'ampere3.nyi.freebsd.org',
+        'beefy20': 'beefy20.chi.freebsd.org',
+        'beefy21': 'beefy21.chi.freebsd.org',
+        'beefy22': 'beefy22.chi.freebsd.org'
+    }
+
     path = 'scrapy_output/'
     json_list_files = [f for f in os.listdir(path) if f.endswith('.json')]
 
@@ -69,7 +102,7 @@ def read_scrapy_json():
 
             try:
                 if row['log_url'].split('/')[2] == "pkg-status.freebsd.org":
-                    i_server = row['log_url'].split('/')[3] + '.nyi.freebsd.org'
+                    i_server = server_dict[row['log_url'].split('/')[3]]
                 else:
                     i_server = row['log_url'].split('/')[2]
             except:
