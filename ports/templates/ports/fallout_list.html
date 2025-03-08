@@ -1,4 +1,5 @@
 {% extends "ports/base.html" %}
+{% load static %}
 {% block title %}Fallout list{% endblock %}
 {% load humanize %}
 {% block body_block %}
@@ -69,7 +70,9 @@
       <th scope="col" style="width: 18%" class="text-nowrap">maintainer</th>
       <th scope="col" style="width: 16%" class="text-nowrap">build environment</th>
       <th scope="col" style="width: 8%"  class="text-nowrap">category</th>
-      <th scope="col" style="width: 12%" class="text-nowrap">date</th>
+      <th scope="col" style="width: 12%" class="text-nowrap">
+          <a href="#" id="toggle-timezone-header" title="Click to switch between UTC and your local timezone">date (UTC)</a>
+      </th>
       <th scope="col" style="width: 24%" class="text-nowrap">urls</th>
     </tr>
   </thead>
@@ -88,7 +91,11 @@
 		  <td class="text-nowrap"><small>{{ fallout.maintainer }}</small></td>
       <td class="text-nowrap"><small>{{ fallout.env }}</small></td>
       <td class="text-nowrap"><small>{{ fallout.category }}</small></td>
-      <td class="text-nowrap"><small>{{ fallout.date | date:"Y-m-d H:i" }}</small></td>
+      <td class="text-nowrap">
+            <small>
+                <span class="utc-time" data-utc="{{ fallout.date.isoformat }}"></span>
+            </small>
+      </td>
 		  <td class="text-nowrap">
 			  <a href="{{fallout.log_url }}" class="badge badge-danger" target="_blank">log</a>
 			  <a href="{{fallout.report_url }}" class="badge badge-info">report</a>
@@ -111,4 +118,5 @@
   </div>
 {% endif %}
 
+<script src="{% static 'js/datetime_toggle.js' %}?v=1.0.0"></script>
 {% endblock %}
