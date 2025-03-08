@@ -29,6 +29,6 @@ cd "$BASEDIR" || exit 1
 python3 import-index.py
 RET=$?
 
-rm -f INDEX-13.bz2
+rm -f INDEX-14.bz2
 
 exit $RET

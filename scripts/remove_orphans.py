@@ -35,9 +35,9 @@ from ports.models import Port
 
 
 def fetch_index():
-    url = "https://www.FreeBSD.org/ports/INDEX-13.bz2"
+    url = "https://www.FreeBSD.org/ports/INDEX-14.bz2"
     r = requests.get(url, allow_redirects=True)
-    open('INDEX-13.bz2', 'wb').write(r.content)
+    open('INDEX-14.bz2', 'wb').write(r.content)
 
 
 def populate_set():
@@ -51,7 +51,7 @@ def populate_set():
 
 
 def read_index(sPorts):
-    with bz2.open('INDEX-13.bz2', mode='rt') as index_file:
+    with bz2.open('INDEX-14.bz2', mode='rt') as index_file:
         for row in index_file:
             row_list = row.split("|")
             p_origin = row_list[1].replace("/usr/ports/", "")
