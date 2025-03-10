@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version 1.9.0
+----------
+
+* Add a new feature to track missing fallouts
+* Add support to display date/time in the local timezone
+* Use the ports 14 index
+
 Version 1.8.2
 ----------
 
