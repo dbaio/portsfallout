@@ -98,7 +98,11 @@
       </td>
 		  <td class="text-nowrap">
 			  <a href="{{fallout.log_url }}" class="badge badge-danger" target="_blank">log</a>
-			  <a href="{{fallout.report_url }}" class="badge badge-info">report</a>
+			{% if fallout.report_url %}
+			  <a href="{{ fallout.report_url }}" class="badge badge-info">report</a>
+			{% else %}
+			  <span class="badge badge-light">report</span>
+			{% endif %}
 			  <a href="{% url 'ports:detail' fallout.port.id  %}" class="badge badge-success">port detail</a>
 			  <a href="https://www.freshports.org/{{fallout.port}}" class="badge badge-dark">FreshPorts</a>
       </td>

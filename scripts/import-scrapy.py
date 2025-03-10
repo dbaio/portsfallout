@@ -125,8 +125,8 @@ def read_scrapy_json():
                                                         date=i_date,
                                                         log_url=row['log_url'],
                                                         build_url=row['build_url'].replace('&amp;','&'),
-                                                        report_url=row['report_url'],
                                                         defaults={'flavor': row['flavor'],
+                                                                  'report_url': row['report_url'],
                                                                   'server': i_server}
                                                         ,)
 
@@ -138,6 +138,10 @@ def read_scrapy_json():
 
                     if fallout.server != i_server:
                         fallout.server = i_server
+                        changed_fields += 1
+
+                    if fallout.report_url != row['report_url']:
+                        fallout.report_url = row['report_url']
                         changed_fields += 1
 
                     if changed_fields > 0:
