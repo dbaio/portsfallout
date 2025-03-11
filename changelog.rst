@@ -1,21 +1,26 @@
 Changelog
 =========
 
+Version 1.9.1
+-------------
+
+* port-detail: Add support to display date/time in the local timezone
+
 Version 1.9.0
-----------
+-------------
 
 * Add a new feature to track missing fallouts
 * Add support to display date/time in the local timezone
 * Use the ports 14 index
 
 Version 1.8.2
-----------
+-------------
 
 * Open log links in a new window
 * Fix the server import/match issue
 
 Version 1.8.1
-----------
+-------------
 
 * navbar: Add missing option for the new maintainer page
 * cmd/server_update: Process by default only the latest 60 days
