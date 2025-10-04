@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 1.9.2
+-------------
+
+* Add new servers, beefy23|beefy24
+
 Version 1.9.1
 -------------
 
