@@ -78,7 +78,10 @@ def read_scrapy_json():
         'ampere3': 'ampere3.nyi.freebsd.org',
         'beefy20': 'beefy20.chi.freebsd.org',
         'beefy21': 'beefy21.chi.freebsd.org',
-        'beefy22': 'beefy22.chi.freebsd.org'
+        'beefy22': 'beefy22.chi.freebsd.org',
+        'beefy23': 'beefy23.chi.freebsd.org',
+        'beefy24': 'beefy24.chi.freebsd.org'
+
     }
 
     path = 'scrapy_output/'
