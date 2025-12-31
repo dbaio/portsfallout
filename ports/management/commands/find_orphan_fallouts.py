@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2025 Danilo G. Baio <dbaio@FreeBSD.org>
+# Copyright (c) 2020-2026 Danilo G. Baio <dbaio@FreeBSD.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -222,6 +222,8 @@ class Command(BaseCommand):
             'ampere1': 'ampere1.nyi.freebsd.org',
             'ampere2': 'ampere2.nyi.freebsd.org',
             'ampere3': 'ampere3.nyi.freebsd.org',
+            'ampere4': 'ampere4.chi.freebsd.org',
+            'ampere5': 'ampere5.chi.freebsd.org',
             'beefy20': 'beefy20.chi.freebsd.org',
             'beefy21': 'beefy21.chi.freebsd.org',
             'beefy22': 'beefy22.chi.freebsd.org',
