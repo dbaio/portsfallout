@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 1.9.3
+-------------
+
+* Add new servers, ampere4|ampere5
+
 Version 1.9.2
 -------------
 
