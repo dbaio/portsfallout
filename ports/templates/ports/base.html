@@ -1,78 +1,75 @@
 <!DOCTYPE html>
 {% load static %}
-<html>
+<html lang="en">
    <head>
       <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>
         {% block title %}{% endblock %} - FreeBSD pkg-fallout
       </title>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
-        <style>
-            .dropdown-item.active, .dropdown-item:active {
-                background-color: #e9ecef;
-                text-decoration: none;
-                color: #212529;
-            }
-        </style>
+      <link rel="stylesheet" href="{% static 'css/portsfallout.css' %}?v=1.10.0">
+
+      <script>
+        // Stamp the stored theme before the first paint, otherwise the page
+        // renders in the system theme and then flips.
+        (function () {
+          var m = document.cookie.match(/(?:^|;\s*)themePreference=(light|dark)/);
+          if (m) { document.documentElement.setAttribute('data-theme', m[1]); }
+        })();
+      </script>
 
       <!-- favicon -->
-      <link rel="apple-touch-icon" sizes="120x120" href="{% static "/apple-touch-icon.png" %}">
-      <link rel="icon" type="image/png" sizes="32x32" href="{% static "/favicon-32x32.png" %}">
-      <link rel="icon" type="image/png" sizes="16x16" href="{% static "/favicon-16x16.png" %}">
-      <link rel="manifest" href="{% static "/site.webmanifest" %}">
-      <link rel="mask-icon" href="{% static "/safari-pinned-tab.svg" %}" color="#5bbad5">
+      <link rel="apple-touch-icon" sizes="120x120" href="{% static "apple-touch-icon.png" %}">
+      <link rel="icon" type="image/png" sizes="32x32" href="{% static "favicon-32x32.png" %}">
+      <link rel="icon" type="image/png" sizes="16x16" href="{% static "favicon-16x16.png" %}">
+      <link rel="manifest" href="{% static "site.webmanifest" %}">
+      <link rel="mask-icon" href="{% static "safari-pinned-tab.svg" %}" color="#5bbad5">
       <meta name="msapplication-TileColor" content="#da532c">
-      <meta name="theme-color" content="#ffffff">
+      <meta name="theme-color" content="#800000">
    </head>
    <body>
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #800000">
-      <a class="navbar-brand" href="{% url 'ports:index' %}"><img src="{% static "fallout-48-w.png" %}" alt="Portsfallout"></a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
+    <nav class="nav">
+      <div class="nav-inner">
+        <a class="nav-brand" href="{% url 'ports:index' %}"><img src="{% static "fallout-48-w.png" %}" alt="PortsFallout"></a>
 
-          <li class="nav-item dropdown {{ navbar_fallout }} {{ navbar_fallout_be }} {{ navbar_fallout_mt }}">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Fallouts
-            </a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                <a class="dropdown-item {{ navbar_fallout }}" href="{% url 'ports:fallout' %}">all pkg-fallouts</a>
-                <a class="dropdown-item {{ navbar_fallout_be }}" href="{% url 'ports:build_env' %}">by build environment</a>
-                <a class="dropdown-item {{ navbar_fallout_mt }}" href="{% url 'ports:maintainer' %}">by maintainers</a>
-            </div>
-          </li>
+        <details class="nav-menu {{ navbar_fallout }}{{ navbar_fallout_be }}{{ navbar_fallout_mt }}">
+          <summary>Fallouts</summary>
+          <div>
+            <a class="{{ navbar_fallout }}" href="{% url 'ports:fallout' %}">all pkg-fallouts</a>
+            <a class="{{ navbar_fallout_be }}" href="{% url 'ports:build_env' %}">by build environment</a>
+            <a class="{{ navbar_fallout_mt }}" href="{% url 'ports:maintainer' %}">by maintainers</a>
+          </div>
+        </details>
 
-          <li class="nav-item {{ navbar_list }}">
-            <a class="nav-link" href="{% url 'ports:list' %}">Ports</a>
-          </li>
-          <li class="nav-item {{ navbar_server }}">
-            <a class="nav-link" href="{% url 'ports:server' %}"">Servers</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link disabled">|</a>
-          </li>
-          <li class="nav-item {{ navbar_about }}">
-            <a class="nav-link" href="{% url 'ports:about' %}">About</a>
-          </li>
-          <li class="nav-item {{ navbar_api }}">
-            <a class="nav-link" href="/api/"">Api</a>
-          </li>
-        </ul>
+        <a class="nav-link {{ navbar_list }}" href="{% url 'ports:list' %}">Ports</a>
+        <a class="nav-link {{ navbar_server }}" href="{% url 'ports:server' %}">Servers</a>
+        <span class="nav-sep">|</span>
+        <a class="nav-link {{ navbar_about }}" href="{% url 'ports:about' %}">About</a>
+        <a class="nav-link" href="/api/">Api</a>
+        <span class="spacer"></span>
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false">auto</button>
       </div>
     </nav>
-      <div class="container">
+
+    <main class="page">
+      <div class="container stack">
       {% block body_block %}
       {% endblock %}
       </div>
-    <footer class="footer bg-light">
-      <div class="container text-right">
-        <span class="text-muted small">PortsFallout (2020-2026)</span>
-      </div>
+    </main>
+
+    <footer class="site">
+      <div class="container">PortsFallout (2020-2026)</div>
     </footer>
-      <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"></script>
+
+    <script src="{% static 'js/theme_toggle.js' %}?v=1.10.0"></script>
+    <script>
+      // Close the navbar dropdown when the click lands outside of it.
+      document.addEventListener('click', function (event) {
+        document.querySelectorAll('details.nav-menu[open]').forEach(function (menu) {
+          if (!menu.contains(event.target)) { menu.open = false; }
+        });
+      });
+    </script>
    </body>
 </html>

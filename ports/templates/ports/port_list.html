@@ -3,69 +3,60 @@
 {% load humanize %}
 {% block body_block %}
 
-<br />
+<details class="filters" {% if has_filter %}open{% endif %}>
+  <summary>
+    <span>Filters</span>
+    {% if form_port %}<span class="chip">port: {{ form_port }}</span>{% endif %}
+    {% if form_maintainer %}<span class="chip">maintainer: {{ form_maintainer }}</span>{% endif %}
+    <span class="count">{{ page_obj.paginator.count|intcomma }} entries</span>
+  </summary>
 
-<form action="{% url 'ports:list' %}" method="GET">
-  <div class="form-row">
-    <div class="form-group col-md-3">
-      <label for="port">Port</label>
-		<input type="text" class="form-control" name="port" placeholder="category/port" value="{{form_port}}">
+  <form class="filter-form" action="{% url 'ports:list' %}" method="GET">
+    <div class="field">
+      <label for="p-port">Port</label>
+      <input type="text" id="p-port" name="port" placeholder="category/port" value="{{ form_port }}">
     </div>
-    <div class="form-group col-md-3">
-      <label for="maintainer">Maintainer</label>
-		<input type="text" class="form-control" name="maintainer" placeholder="maintainer" value="{{form_maintainer}}">
+    <div class="field">
+      <label for="p-maintainer">Maintainer</label>
+      <input type="text" id="p-maintainer" name="maintainer" placeholder="maintainer" value="{{ form_maintainer }}">
     </div>
-  </div>
-  <button type="submit" class="btn btn-primary btn-sm">Filter</button>
-  <small class="text-muted">
-{% if page_obj.paginator.count > 1 %}
-    There are {{ page_obj.paginator.count|intcomma }} entries in the current filter.
+    <div class="filter-actions">
+      <button type="submit" class="btn">Filter</button>
+      <span class="muted small">Regular expressions are allowed.</span>
+    </div>
+  </form>
+</details>
+
+{% if filter_error %}
+  <div class="alert">{{ filter_error }}</div>
 {% endif %}
-    Regular expressions are allowed for filtering.
-  </small>
-</form>
-
-<br />
 
 {% if port_list %}
-	<h3>Port List</h3>
-
-<div class="table-responsive">
-<table class="table table-sm table-striped">
-  <thead>
-    <tr>
-      <th scope="col" class="text-nowrap">port</th>
-      <th scope="col" class="text-nowrap">maintainer</th>
-      <th scope="col" class="text-nowrap">fallouts</th>
-    </tr>
-  </thead>
-  <tbody>
-	{% for port in port_list %}
-    <tr>
-      <td class="text-nowrap"><small><a href="{% url 'ports:detail' port.id  %}">{{ port.origin }}</a></small></td>
-      <td class="text-nowrap"><small>{{ port.maintainer }}</small></td>
-      <td class="text-nowrap"><small>{{ port.fcount|intcomma }}</small></td>
-    </tr>
-	{% endfor %}
-  </tbody>
-</table>
+<div class="table-wrap">
+  <table class="data">
+    <thead>
+      <tr>
+        <th scope="col">port</th>
+        <th scope="col">maintainer</th>
+        <th scope="col" class="num">fallouts</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for port in port_list %}
+      <tr>
+        <td><a href="{% url 'ports:detail' port.id %}">{{ port.origin }}</a></td>
+        <td{% ifchanged port.maintainer %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ port.maintainer }}</td>
+        <td class="num">{{ port.fcount|intcomma }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
 </div>
 
 {% include 'ports/pagination.html' %}
-
 {% else %}
-  <div class="row">
-    <div class="col-md-12">
-      <p>No port found for this query.</p>
-    </div>
-  </div>
+  <p class="muted">No port matches this filter.</p>
 {% endif %}
 
-  <div class="row">
-    <div class="col-md-12">
-      <p>Filtering entries from the last 30 days.</p>
-    </div>
-  </div>
-
-
+<p class="muted small">Ports with at least one pkg-fallout in the last 30 days.</p>
 {% endblock %}

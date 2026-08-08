@@ -1,5 +1,3 @@
-#!/bin/sh
-#
 # Copyright (c) 2020-2026 Danilo G. Baio <dbaio@FreeBSD.org>
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,12 +21,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-BASEDIR=$(dirname "$0")
-cd "$BASEDIR" || exit 1
+"""Pagination classes for the API
+"""
 
-python3 import-index.py
-RET=$?
+from rest_framework.pagination import LimitOffsetPagination
 
-rm -f INDEX-15.bz2
 
-exit $RET
+class CappedLimitOffsetPagination(LimitOffsetPagination):
+    """LimitOffsetPagination with an upper bound on `limit`
+
+    The default `max_limit` is None, which lets an anonymous client ask for the
+    whole table in a single request.
+    """
+
+    default_limit = 50
+    max_limit = 500

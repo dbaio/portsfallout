@@ -1,1 +1,7 @@
-django-debug-toolbar
+# Development only. See requirements.txt for the ports tree mapping.
+#
+#   django-debug-toolbar  www/py-django-debug-toolbar
+
+-r requirements.txt
+
+django-debug-toolbar>=7.0.0

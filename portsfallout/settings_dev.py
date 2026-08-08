@@ -41,15 +41,28 @@ TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = ''
+# Never hardcode it here, this file is tracked in git.
+SECRET_KEY = os.environ.get('PORTSFALLOUT_SECRET_KEY', 'insecure-development-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('PORTSFALLOUT_DEBUG', 'true').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    host for host in os.environ.get('PORTSFALLOUT_ALLOWED_HOSTS', '').split(',') if host
+]
+
+# The debug toolbar is a development-only dependency: it exposes the SQL,
+# settings and environment panels, so it is never loaded when DEBUG is off.
+USE_DEBUG_TOOLBAR = False
+if DEBUG:
+    try:
+        import debug_toolbar  # noqa: F401
+        USE_DEBUG_TOOLBAR = True
+    except ImportError:
+        pass
 
 
 # Application definition
@@ -63,7 +76,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'rest_framework',
-    'debug_toolbar',
     'ports',
 ]
 
@@ -76,9 +88,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
 ]
+
+if USE_DEBUG_TOOLBAR:
+    INSTALLED_APPS.append('debug_toolbar')
+    MIDDLEWARE.insert(
+        MIDDLEWARE.index('django.middleware.clickjacking.XFrameOptionsMiddleware') + 1,
+        'debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'portsfallout.urls'
 
@@ -140,8 +157,6 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = True
-
 USE_TZ = True
 
 
@@ -159,17 +174,41 @@ INTERNAL_IPS = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'DEFAULT_PAGINATION_CLASS': 'ports.pagination.CappedLimitOffsetPagination',
     'PAGE_SIZE': 50
 }
+
+# The file based cache pickles its entries and unpickles them on read, so the
+# directory must not be writable by other users on the host. A predictable path
+# under /tmp lets any local user pre-create it and get code execution as the
+# user running the application.
+CACHE_DIR = os.environ.get('PORTSFALLOUT_CACHE_DIR', os.path.join(BASE_DIR, 'cache'))
 
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': '/tmp/portsfallout_cache',
+        'LOCATION': CACHE_DIR,
         'TIMEOUT': 3600,
         'OPTIONS': {
             'MAX_ENTRIES': 10000
         }
     }
 }
+
+# Security settings that only make sense once the site is served over HTTPS.
+# Verify with: ./manage.py check --deploy
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    CSRF_TRUSTED_ORIGINS = [
+        origin for origin in
+        os.environ.get('PORTSFALLOUT_CSRF_TRUSTED_ORIGINS', '').split(',') if origin
+    ]
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'same-origin'
+X_FRAME_OPTIONS = 'DENY'

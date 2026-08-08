@@ -21,7 +21,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import urllib.parse
 from django.db import models
 
 class Category(models.Model):
@@ -36,9 +35,10 @@ class Category(models.Model):
 
 class Port(models.Model):
     origin = models.CharField(max_length=128, unique=True)
-    name = models.CharField(max_length=64)
+    # The name is the origin without the category, so it can be nearly as long.
+    name = models.CharField(max_length=128)
     comment = models.CharField(max_length=192, blank=True)
-    maintainer = models.EmailField()
+    maintainer = models.EmailField(db_index=True)
     www = models.URLField(blank=True)
 
     # Categories
@@ -51,12 +51,12 @@ class Port(models.Model):
 
 class Fallout(models.Model):
     port = models.ForeignKey(Port, on_delete=models.CASCADE)
-    env = models.CharField(max_length=48)
+    env = models.CharField(max_length=48, db_index=True)
     version = models.CharField(max_length=48)
-    category = models.CharField(max_length=48)
-    maintainer = models.EmailField()
+    category = models.CharField(max_length=48, db_index=True)
+    maintainer = models.EmailField(db_index=True)
     last_committer = models.EmailField()
-    date = models.DateTimeField()
+    date = models.DateTimeField(db_index=True)
     log_url = models.URLField()
     build_url = models.URLField()
     report_url = models.URLField()

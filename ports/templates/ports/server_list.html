@@ -2,60 +2,44 @@
 {% block title %}Server list{% endblock %}
 {% block body_block %}
 {% load proxy %}
-{% load link_badge %}
 
-<br />
+<h1>Servers</h1>
 
-	<h3>Server List</h3>
-
-<div class="table-responsive">
-<table class="table table-sm table-striped">
-  <thead>
-    <tr>
-      <th scope="col" class="text-nowrap">server</th>
-      <th scope="col">build environment</th>
-      <th scope="col" class="text-nowrap">connectivity</th>
-    </tr>
-  </thead>
-  <tbody>
-	{% for server in server_list %}
-    <tr>
-      <td class="text-nowrap"><small><a href="http://{{ server.name }}">{{ server.name }}</a></small></td>
-      <td>
-          <small>
-            {% for srv_env in server.envs.all %}
-                <a href="{% url 'ports:fallout' %}?env={{ srv_env|urlencode:"" }}" class="badge {{ forloop.counter | get_link_badge }}">{{ srv_env }}</a>
-            {% endfor %}
-          </small>
-      </td>
-      <td class="text-nowrap"><small>
-        {% if server.v4 %}
-            <span class="badge badge-success">IPv4</span>
-        {% else %}
-            <span class="badge badge-danger">IPv4</span>
-        {% endif %}
-
-        {% if server.v6 %}
-            <span class="badge badge-success">IPv6</span>
-        {% else %}
-            <span class="badge badge-danger">IPv6</span>
-        {% endif %}
-            <a href="https://pkg-status.freebsd.org/{{ server.name | get_short_name }}/" class="badge badge-secondary">IPv4 Proxy</a>
-        </small>
-      </td>
-    </tr>
-	{% endfor %}
-  </tbody>
-</table>
+<div class="table-wrap">
+  <table class="data">
+    <thead>
+      <tr>
+        <th scope="col">server</th>
+        <th scope="col">build environment</th>
+        <th scope="col">connectivity</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for server in server_list %}
+      <tr>
+        <td><a href="https://{{ server.name }}">{{ server.name }}</a></td>
+        <td style="white-space: normal">
+          <span class="row-actions" style="flex-wrap: wrap">
+          {% for srv_env in server.envs.all %}
+            <a href="{% url 'ports:fallout' %}?env={{ srv_env|urlencode:"" }}">{{ srv_env }}</a>
+          {% endfor %}
+          </span>
+        </td>
+        <td>
+          <span class="dim">
+            {% if server.v4 %}IPv4{% else %}<s>IPv4</s>{% endif %}
+            {% if server.v6 %}IPv6{% else %}<s>IPv6</s>{% endif %}
+          </span>
+          &nbsp;<a href="https://pkg-status.freebsd.org/{{ server.name|get_short_name }}/">proxy</a>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
 </div>
 
 {% include 'ports/pagination.html' %}
 
-<div class="row">
-    <div class="col-md-12">
-      <br />
-      <p>Some servers have only IPv6 connectivity.</p>
-    </div>
-  </div>
+<p class="muted small">Some servers have only IPv6 connectivity.</p>
 
 {% endblock %}

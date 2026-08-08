@@ -23,6 +23,8 @@
 
 import re
 import urllib.parse
+from datetime import timedelta
+
 import requests
 from dateutil import parser
 from django.core.management.base import BaseCommand
@@ -36,10 +38,18 @@ from twisted.internet import defer, reactor
 class Command(BaseCommand):
     help = "Find orphan fallouts from the FreeBSD pkg-fallout archive"
 
+    def add_arguments(self, parser):
+
+        parser.add_argument('period',
+                            nargs='?',
+                            type=int,
+                            default=30,
+                            help='Query entries from the last X days (default: 30)',)
+
     def handle(self, *args, **options):
         self.verbosity = options.get('verbosity')
-        period = options.get("period", 30)
-        period_date = dtz.make_aware(dtz.datetime.today() - dtz.timedelta(days=period))
+        period = options.get("period") or 30
+        period_date = dtz.now() - timedelta(days=period)
 
         unique_urls = set()
         for f in Fallout.objects.filter(date__gte=period_date):
@@ -253,7 +263,7 @@ class Command(BaseCommand):
                 i_server = server_dict[i_log_url.split('/')[3]]
             else:
                 i_server = i_log_url.split('/')[2]
-        except:
+        except (IndexError, KeyError):
             i_server = ""
 
         try:

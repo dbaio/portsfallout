@@ -26,6 +26,23 @@
 
 import re
 
+# A user supplied regex is handed over to the database engine, which runs it
+# against every row of the table. Keep the pattern short so a single request
+# cannot turn into an expensive scan.
+MAX_REGEX_LENGTH = 128
+
+# Classic catastrophic backtracking signature: a quantifier applied to a group
+# that already contains one, e.g. `(a+)+`, `(\w+\s?)*`, `(x{2,})+`.
+NESTED_QUANTIFIER_RE = re.compile(r'\([^()]*[*+}][^()]*\)\s*[*+{]')
+
+# Constructs that Python's `re` accepts but the MySQL/MariaDB regex engine
+# rejects, where they surface as an uncaught OperationalError.
+UNSUPPORTED_SYNTAX_RE = re.compile(r'\(\?(?:P[<=]|#|[aLu])')
+
+
+class InvalidRegexError(ValueError):
+    """A user supplied regex that we are not willing to run on the database."""
+
 
 def IsRegex(raw_text):
     """Check if the string has characters used for regular expressions
@@ -43,13 +60,44 @@ def IsRegex(raw_text):
 
     character_list = ['^', '$', '*', '+', '?', '{', '\\', '[', '(', '|', '!']
 
+    if not any(str_char in character_list for str_char in raw_text):
+        return False
+
+    # Checked before compiling: an oversized pattern is not worth handing to
+    # `re`, and `ValidateRegex` rejects it with a message anyway.
+    if len(raw_text) > MAX_REGEX_LENGTH:
+        return True
+
     try:
         re.compile(raw_text)
     except re.error:
         return False
 
-    for str_char in raw_text:
-        if str_char in character_list:
-            return True
+    return True
 
-    return False
+
+def ValidateRegex(raw_text):
+    """Reject user supplied regexes that are unsafe or unsupported
+
+    `IsRegex` only tells us the string looks like a regex and compiles under
+    Python. That is not enough: the pattern is evaluated by the database, whose
+    engine has a different dialect and no protection against a pattern crafted
+    to backtrack forever.
+
+    Arguments:
+        raw_text [string] -- pattern already accepted by `IsRegex`
+    Raises:
+        InvalidRegexError -- with a message suitable for display to the user
+    """
+
+    if len(raw_text) > MAX_REGEX_LENGTH:
+        raise InvalidRegexError(
+            f'Regular expression is too long (limit is {MAX_REGEX_LENGTH} characters).')
+
+    if NESTED_QUANTIFIER_RE.search(raw_text):
+        raise InvalidRegexError(
+            'Regular expression has nested quantifiers, which are too expensive to run.')
+
+    if UNSUPPORTED_SYNTAX_RE.search(raw_text):
+        raise InvalidRegexError(
+            'Regular expression uses syntax that the database does not support.')

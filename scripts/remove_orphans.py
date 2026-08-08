@@ -33,11 +33,18 @@ import django
 django.setup()
 from ports.models import Port
 
+INDEX_FILE = 'INDEX-15.bz2'
+INDEX_URL = f'https://www.FreeBSD.org/ports/{INDEX_FILE}'
+
 
 def fetch_index():
-    url = "https://www.FreeBSD.org/ports/INDEX-14.bz2"
-    r = requests.get(url, allow_redirects=True)
-    open('INDEX-14.bz2', 'wb').write(r.content)
+    with requests.get(INDEX_URL, allow_redirects=True, stream=True, timeout=60) as r:
+        # Without this an error page would be written out as the index, and
+        # every port would then look like an orphan.
+        r.raise_for_status()
+        with open(INDEX_FILE, 'wb') as index_file:
+            for chunk in r.iter_content(chunk_size=65536):
+                index_file.write(chunk)
 
 
 def populate_set():
@@ -51,7 +58,7 @@ def populate_set():
 
 
 def read_index(sPorts):
-    with bz2.open('INDEX-14.bz2', mode='rt') as index_file:
+    with bz2.open(INDEX_FILE, mode='rt') as index_file:
         for row in index_file:
             row_list = row.split("|")
             p_origin = row_list[1].replace("/usr/ports/", "")

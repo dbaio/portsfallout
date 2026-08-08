@@ -1,6 +1,23 @@
 Changelog
 =========
 
+Version 1.10.0
+--------------
+
+* Validate the user supplied regex filters before they reach the database,
+  rejecting nested quantifiers and patterns the database cannot parse
+* Report a rejected filter as a message instead of an error page
+* Cap the ``limit`` accepted by the API
+* Index the columns used by the filters and by the date ordering
+* Avoid the N+1 queries on the fallout list and on the API
+* Move the secret key, debug flag and allowed hosts to the environment
+* Only load the debug toolbar when running with debug on
+* Add the security settings reported by ``manage.py check --deploy``
+* Move the file based cache out of ``/tmp``
+* Require Django 5.2 LTS, 4.2 is end of life
+* Add a test suite
+* Use the ports 15 index
+
 Version 1.9.3
 -------------
 

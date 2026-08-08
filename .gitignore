@@ -148,6 +148,7 @@ dmypy.json
 # portsfallout
 INDEX-*.bz2
 portsfallout/settings.py
+cache/
 scripts/scrapy_output/*.json
 scripts/scrapy_output/processed/*.json
 .vscode

@@ -110,12 +110,12 @@ def read_scrapy_json():
                     i_server = server_dict[row['log_url'].split('/')[3]]
                 else:
                     i_server = row['log_url'].split('/')[2]
-            except:
+            except (IndexError, KeyError):
                 i_server = ""
 
             try:
                 port = Port.objects.get(origin=i_origin)
-            except:
+            except Port.DoesNotExist:
                 port = None
 
             i_date = parser.parse(row['date'])

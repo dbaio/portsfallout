@@ -4,122 +4,103 @@
 {% load humanize %}
 {% block body_block %}
 
-<br />
+<details class="filters" {% if has_filter %}open{% endif %}>
+  <summary>
+    <span>Filters</span>
+    {% if form_port %}<span class="chip">port: {{ form_port }}</span>{% endif %}
+    {% if form_maintainer %}<span class="chip">maintainer: {{ form_maintainer }}</span>{% endif %}
+    {% if form_env %}<span class="chip">env: {{ form_env }}</span>{% endif %}
+    {% if form_category %}<span class="chip">category: {{ form_category }}</span>{% endif %}
+    {% if form_flavor %}<span class="chip">flavor: {{ form_flavor }}</span>{% endif %}
+    {% for category in form_categories %}<span class="chip">{{ category }}</span>{% endfor %}
+    <span class="count">{{ page_obj.paginator.count|intcomma }} entries</span>
+  </summary>
 
-<form action="{% url 'ports:fallout' %}" method="GET">
-  <div class="form-row">
-    <div class="form-group col-md-3">
-      <label for="port">Port</label>
-      <input type="text" class="form-control" name="port" placeholder="category/port" value="{{ form_port }}">
+  <form class="filter-form" action="{% url 'ports:fallout' %}" method="GET">
+    <div class="field">
+      <label for="f-port">Port</label>
+      <input type="text" id="f-port" name="port" placeholder="category/port" value="{{ form_port }}">
     </div>
-    <div class="form-group col-md-3">
-      <label for="maintainer">Maintainer</label>
-		<input type="text" class="form-control" name="maintainer" placeholder="maintainer" value="{{ form_maintainer }}">
+    <div class="field">
+      <label for="f-maintainer">Maintainer</label>
+      <input type="text" id="f-maintainer" name="maintainer" placeholder="maintainer" value="{{ form_maintainer }}">
     </div>
-    <div class="form-group col-md-3">
-      <label for="env">Build environment</label>
-      <input type="text" class="form-control" name="env" placeholder="build environment" value="{{ form_env }}">
+    <div class="field">
+      <label for="f-env">Build environment</label>
+      <input type="text" id="f-env" name="env" placeholder="build environment" value="{{ form_env }}">
     </div>
-    <div class="form-group col-md-3">
-      <label for="category">Category</label>
-      <input type="text" class="form-control" name="category" aria-describedby="categoryHelp" placeholder="patch" value="{{ form_category }}">
+    <div class="field">
+      <label for="f-category">Category</label>
+      <input type="text" id="f-category" name="category" placeholder="patch" value="{{ form_category }}">
     </div>
-  </div>
-  <div class="form-row">
-    <div class="form-group col-md-3">
-      <label for="categories">Port Categories</label>
-      <select multiple class="form-control" name="categories">
-{% for category in categories %}
-    {% if category|stringformat:"s" in form_categories %}
-        <option selected>{{ category }}</option>
-    {% else %}
-        <option>{{ category }}</option>
-    {% endif %}
-{% endfor %}
+    <div class="field">
+      <label for="f-flavor">Flavor</label>
+      <input type="text" id="f-flavor" name="flavor" placeholder="flavor" value="{{ form_flavor }}">
+    </div>
+    <div class="field">
+      <label for="f-categories">Port categories</label>
+      <select multiple id="f-categories" name="categories">
+        {% for category in categories %}
+          {% if category|stringformat:"s" in form_categories %}
+            <option selected>{{ category }}</option>
+          {% else %}
+            <option>{{ category }}</option>
+          {% endif %}
+        {% endfor %}
       </select>
-      {% if form_categories %}
-      <small class="text-muted">
-        {{ form_categories }}
-      {% endif %}
-      </small>
     </div>
-    <div class="form-group col-md-3">
-      <label for="flavor">Flavor</label>
-      <input type="text" class="form-control" name="flavor" aria-describedby="flavorHelp" placeholder="flavor" value="{{ form_flavor }}">
+    <div class="filter-actions">
+      <button type="submit" class="btn">Filter</button>
+      <span class="muted small">Regular expressions are allowed.</span>
     </div>
-  </div>
-  <button type="submit" class="btn btn-primary btn-sm">Filter</button>
-  <small class="text-muted">
-{% if page_obj.paginator.count > 1 %}
-    There are {{ page_obj.paginator.count|intcomma }} entries in the current filter.
-{% endif %}
-    Regular expressions are allowed for filtering.
-  </small>
-</form>
+  </form>
+</details>
 
-<br />
+{% if filter_error %}
+  <div class="alert">{{ filter_error }}</div>
+{% endif %}
 
 {% if fallout_list %}
-	<h3>Fallout List</h3>
-
-<div class="table-responsive">
-<table class="table table-sm table-striped">
-  <thead>
-    <tr>
-      <th scope="col" style="width: 22%" class="text-nowrap">port</th>
-      <th scope="col" style="width: 18%" class="text-nowrap">maintainer</th>
-      <th scope="col" style="width: 16%" class="text-nowrap">build environment</th>
-      <th scope="col" style="width: 8%"  class="text-nowrap">category</th>
-      <th scope="col" style="width: 12%" class="text-nowrap">
+<div class="table-wrap">
+  <table class="data">
+    <thead>
+      <tr>
+        <th scope="col">port</th>
+        <th scope="col">maintainer</th>
+        <th scope="col">build environment</th>
+        <th scope="col">category</th>
+        <th scope="col">
           <a href="#" id="toggle-timezone-header" title="Click to switch between UTC and your local timezone">date (UTC)</a>
-      </th>
-      <th scope="col" style="width: 24%" class="text-nowrap">urls</th>
-    </tr>
-  </thead>
-  <tbody>
-	{% for fallout in fallout_list %}
-    <tr>
-      <td class="text-nowrap">
-        <small><a href="{% url 'ports:fdetail' fallout.id  %}">
-        {% if fallout.flavor %}
-          {{ fallout.port }}@{{ fallout.flavor }}
-        {% else %}
-          {{ fallout.port }}
-        {% endif %}
-        </a></small>
-      </td>
-		  <td class="text-nowrap"><small>{{ fallout.maintainer }}</small></td>
-      <td class="text-nowrap"><small>{{ fallout.env }}</small></td>
-      <td class="text-nowrap"><small>{{ fallout.category }}</small></td>
-      <td class="text-nowrap">
-            <small>
-                <span class="utc-time" data-utc="{{ fallout.date.isoformat }}"></span>
-            </small>
-      </td>
-		  <td class="text-nowrap">
-			  <a href="{{fallout.log_url }}" class="badge badge-danger" target="_blank">log</a>
-			{% if fallout.report_url %}
-			  <a href="{{ fallout.report_url }}" class="badge badge-info">report</a>
-			{% else %}
-			  <span class="badge badge-light">report</span>
-			{% endif %}
-			  <a href="{% url 'ports:detail' fallout.port.id  %}" class="badge badge-success">port detail</a>
-			  <a href="https://www.freshports.org/{{fallout.port}}" class="badge badge-dark">FreshPorts</a>
-      </td>
-    </tr>
-	{% endfor %}
-  </tbody>
-</table>
+        </th>
+        <th scope="col">urls</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for fallout in fallout_list %}
+      <tr>
+        <td{% ifchanged fallout.port fallout.flavor %}{% else %} class="repeat"{% endifchanged %}>
+          <a href="{% url 'ports:fdetail' fallout.id %}">{{ fallout.port }}{% if fallout.flavor %}@{{ fallout.flavor }}{% endif %}</a>
+        </td>
+        <td{% ifchanged fallout.maintainer %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ fallout.maintainer }}</td>
+        <td{% ifchanged fallout.env %}{% else %} class="repeat"{% endifchanged %}>{{ fallout.env }}</td>
+        <td{% ifchanged fallout.category %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ fallout.category }}</td>
+        <td class="dim"><span class="utc-time" data-utc="{{ fallout.date.isoformat }}"></span></td>
+        <td>
+          <span class="row-actions">
+            <a href="{{ fallout.log_url }}" target="_blank" rel="noopener">log</a>
+            {% if fallout.report_url %}<a href="{{ fallout.report_url }}">report</a>{% else %}<span>report</span>{% endif %}
+            <a href="{% url 'ports:detail' fallout.port.id %}">port</a>
+          </span>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
 </div>
 
 {% include 'ports/pagination.html' %}
-
 {% else %}
-  <div class="row">
-    <div class="col-md-12">
-      <p>No pkg-fallout found for this query.</p>
-    </div>
-  </div>
+  <p class="muted">No pkg-fallout matches this filter.</p>
 {% endif %}
 
 <script src="{% static 'js/datetime_toggle.js' %}?v=1.0.0"></script>

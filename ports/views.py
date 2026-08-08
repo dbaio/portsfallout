@@ -21,21 +21,93 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import logging
+from datetime import timedelta
+
+from django.http import Http404
 from django.shortcuts import render
 from django.views.generic import View, TemplateView, ListView, DetailView
+from django.db import OperationalError
 from django.db.models import Count, Q
 from django.db.models.functions import TruncDay
 from ports.models import Port, Category, Fallout, Server
+from ports.pagination import CappedLimitOffsetPagination
 from ports.serializers import CategorySerializer, PortSerializer, FalloutSerializer
-from ports.utils import IsRegex
+from ports.utils import InvalidRegexError, IsRegex, ValidateRegex
 from rest_framework import filters, viewsets
 from django.utils import timezone as dtz
+
+logger = logging.getLogger(__name__)
+
+
+def build_filter(field, value, fallback_lookup):
+    """Build the Q object for one user supplied filter field
+
+    A value that looks like a regex is validated before being handed to the
+    database, anything else falls back to a plain lookup.
+
+    Raises:
+        InvalidRegexError -- if the value is a regex we refuse to run
+    """
+
+    if IsRegex(value):
+        ValidateRegex(value)
+        return Q(**{f'{field}__iregex': value})
+
+    return Q(**{f'{field}__{fallback_lookup}': value})
+
+
+class RegexFilterMixin:
+    """Turn a rejected filter into a message instead of an error page
+
+    A filter can fail in two ways: `ValidateRegex` refuses it up front, or the
+    database engine rejects it once the query runs. Both end up as an empty
+    result list plus `filter_error` in the context.
+    """
+
+    filter_error = None
+
+    def paginate_queryset(self, queryset, page_size):
+        """Fall back to the last page instead of raising a 404
+
+        Narrowing a filter while on page 5 leaves a stale `page` in the URL, and
+        so do bookmarks and the back button. Retrying only on the error keeps
+        the extra count out of the common path.
+        """
+
+        try:
+            return super().paginate_queryset(queryset, page_size)
+        except Http404:
+            # A number past the end is a stale page, so the last one is what
+            # was meant. Anything else is nonsense and starts over at the first.
+            try:
+                past_the_end = int(self.request.GET.get(self.page_kwarg)) > 1
+            except (TypeError, ValueError):
+                past_the_end = False
+
+            self.kwargs[self.page_kwarg] = 'last' if past_the_end else 1
+            return super().paginate_queryset(queryset, page_size)
+
+    def get(self, request, *args, **kwargs):
+        try:
+            return super().get(request, *args, **kwargs)
+        except OperationalError:
+            logger.warning('Database rejected a user filter on %s', request.get_full_path())
+            self.filter_error = 'The filter could not be evaluated by the database.'
+            self.object_list = self.model.objects.none()
+            return self.render_to_response(
+                self.get_context_data(object_list=self.object_list))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['filter_error'] = self.filter_error
+        return context
 
 
 def dashboard(request):
     context = {}
 
-    from_date = dtz.make_aware(dtz.datetime.today() - dtz.timedelta(days=30))
+    from_date = dtz.now() - timedelta(days=30)
 
     fallout_cat = Fallout.objects.filter(date__gte=from_date).values('category').annotate(total=Count('category'), total_ports=Count('port', distinct=True)).order_by('-total')[:20]
     context['fallout_cat'] = fallout_cat
@@ -52,26 +124,60 @@ def dashboard(request):
     fallout_count_recent = Fallout.objects.filter(date__gte=from_date).count()
     context['fallout_count_recent'] = fallout_count_recent
 
+    context['fallout_ports_recent'] = (Fallout.objects.filter(date__gte=from_date)
+                                       .values('port').distinct().count())
+
     fallout_count = Fallout.objects.count()
     context['fallout_count'] = fallout_count
 
-    fallout_recent = Fallout.objects.all().values().order_by('-date')[0]
+    fallout_recent = Fallout.objects.all().values().order_by('-date').first()
     context['fallout_recent'] = fallout_recent
 
-    fallout_oldest = Fallout.objects.all().values().order_by('date')[0]
+    fallout_oldest = Fallout.objects.all().values().order_by('date').first()
     context['fallout_oldest'] = fallout_oldest
 
-    # Chart
-    chart_labels = []
-    chart_data = []
-    querysetChart = Fallout.objects.filter(date__gte=from_date).annotate(date_f=TruncDay('date')).values("date_f").annotate(date_count=Count('id')).order_by("date_f")
+    # Chart: daily totals split by the three build environments reporting the
+    # most fallouts, with everything else folded into a fourth bucket. A flat
+    # daily total does not say why a day is big; this does.
+    top_envs = [row['env'] for row in
+                Fallout.objects.filter(date__gte=from_date).values('env')
+                .annotate(total=Count('id')).order_by('-total')[:3]]
+    series = top_envs + ['others']
 
-    for fallout in querysetChart:
-        chart_labels.append(str(fallout['date_f'].date()))
-        chart_data.append(fallout['date_count'])
+    daily = (Fallout.objects.filter(date__gte=from_date)
+             .annotate(day=TruncDay('date')).values('day', 'env')
+             .annotate(total=Count('id')).order_by('day'))
 
-    context['chart_labels'] = chart_labels
-    context['chart_data'] = chart_data
+    per_day = {}
+    for row in daily:
+        day = row['day'].date()
+        bucket = row['env'] if row['env'] in top_envs else 'others'
+        per_day.setdefault(day, dict.fromkeys(series, 0))
+        per_day[day][bucket] += row['total']
+
+    peak = max((sum(counts.values()) for counts in per_day.values()), default=0)
+
+    chart = []
+    for day in sorted(per_day):
+        counts = per_day[day]
+        total = sum(counts.values())
+        chart.append({
+            'day': day,
+            'total': total,
+            # Percentage of the plot height; the segments are then a
+            # percentage of the bar, so both resolve in CSS.
+            'height': total * 100.0 / peak if peak else 0,
+            'segments': [{'name': name, 'count': counts[name], 'index': index,
+                          'height': counts[name] * 100.0 / total}
+                         for index, name in enumerate(series, start=1)
+                         if counts[name]],
+        })
+
+    context['chart'] = chart
+    context['chart_series'] = list(enumerate(series, start=1))
+    context['chart_peak'] = peak
+    context['chart_first_day'] = chart[0]['day'] if chart else None
+    context['chart_last_day'] = chart[-1]['day'] if chart else None
 
     return render(request, 'ports/dashboard.html', context)
 
@@ -98,7 +204,7 @@ def maintainer(request):
 
     return render(request, 'ports/maintainer.html', context)
 
-class FalloutListView(ListView):
+class FalloutListView(RegexFilterMixin, ListView):
     paginate_by = 50
     model = Fallout
     ordering = ['-date']
@@ -111,39 +217,28 @@ class FalloutListView(ListView):
         flavor = self.request.GET.get('flavor', '').strip()
         categories = self.request.GET.getlist('categories')
 
-        if IsRegex(maintainer):
-            query = Q(maintainer__iregex=maintainer)
-        else:
-            query = Q(maintainer__istartswith=maintainer)
+        try:
+            query = build_filter('maintainer', maintainer, 'istartswith')
 
-        if port:
-            if IsRegex(port):
-                query.add(Q(port__origin__iregex=port), Q.AND)
-            else:
-                query.add(Q(port__origin__icontains=port), Q.AND)
+            if port:
+                query.add(build_filter('port__origin', port, 'icontains'), Q.AND)
 
-        if env:
-            if IsRegex(env):
-                query.add(Q(env__iregex=env), Q.AND)
-            else:
-                query.add(Q(env__icontains=env), Q.AND)
+            if env:
+                query.add(build_filter('env', env, 'icontains'), Q.AND)
 
-        if category:
-            if IsRegex(category):
-                query.add(Q(category__iregex=category), Q.AND)
-            else:
-                query.add(Q(category__iexact=category), Q.AND)
+            if category:
+                query.add(build_filter('category', category, 'iexact'), Q.AND)
 
-        if flavor:
-            if IsRegex(flavor):
-                query.add(Q(flavor__iregex=flavor), Q.AND)
-            else:
-                query.add(Q(flavor__icontains=flavor), Q.AND)
+            if flavor:
+                query.add(build_filter('flavor', flavor, 'icontains'), Q.AND)
+        except InvalidRegexError as error:
+            self.filter_error = str(error)
+            return Fallout.objects.none()
 
         if categories:
             query.add(Q(port__categories__name__in=categories), Q.AND)
 
-        queryset = Fallout.objects.filter(query).order_by('-date')
+        queryset = Fallout.objects.filter(query).select_related('port').order_by('-date')
 
         return queryset
 
@@ -157,6 +252,9 @@ class FalloutListView(ListView):
         context['form_flavor'] = self.request.GET.get('flavor', '')
         context['form_categories'] = self.request.GET.getlist('categories')
         context['categories'] = Category.objects.all().order_by('name')
+        context['has_filter'] = any([context['form_maintainer'], context['form_port'],
+                                     context['form_env'], context['form_category'],
+                                     context['form_flavor'], context['form_categories']])
         return context
 
 
@@ -165,26 +263,23 @@ class FalloutDetailView(DetailView):
     template_name = 'ports/fallout_detail.html'
 
 
-class PortListView(ListView):
+class PortListView(RegexFilterMixin, ListView):
     paginate_by = 50
     model = Port
     ordering = ['origin']
 
     def get_queryset(self):
-        maintainer = self.request.GET.get('maintainer', '')
-        port = self.request.GET.get('port', '')
+        maintainer = self.request.GET.get('maintainer', '').strip()
+        port = self.request.GET.get('port', '').strip()
 
-        if IsRegex(maintainer):
-            query = Q(maintainer__iregex=maintainer)
-        else:
-            query = Q(maintainer__istartswith=maintainer)
+        try:
+            query = build_filter('maintainer', maintainer, 'istartswith')
+            query.add(build_filter('origin', port, 'icontains'), Q.AND)
+        except InvalidRegexError as error:
+            self.filter_error = str(error)
+            return Port.objects.none()
 
-        if IsRegex(port):
-            query.add(Q(origin__iregex=port), Q.AND)
-        else:
-            query.add(Q(origin__icontains=port), Q.AND)
-
-        from_date = dtz.make_aware(dtz.datetime.today() - dtz.timedelta(days=30))
+        from_date = dtz.now() - timedelta(days=30)
         query.add(Q(fallout__date__gte=from_date), Q.AND)
 
         queryset = Port.objects.filter(query).annotate(fcount=Count('fallout')).order_by('-fcount')
@@ -195,6 +290,7 @@ class PortListView(ListView):
         context['navbar_list'] = 'active'
         context['form_maintainer'] = self.request.GET.get('maintainer', '')
         context['form_port'] = self.request.GET.get('port', '')
+        context['has_filter'] = any([context['form_maintainer'], context['form_port']])
         return context
 
 
@@ -232,6 +328,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
     search_fields = ['name']
     filter_backends = (filters.SearchFilter,)
+    pagination_class = CappedLimitOffsetPagination
     queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
 
@@ -242,7 +339,8 @@ class PortViewSet(viewsets.ReadOnlyModelViewSet):
     """
     search_fields = ['origin', 'maintainer']
     filter_backends = (filters.SearchFilter,)
-    queryset = Port.objects.all().order_by('origin')
+    pagination_class = CappedLimitOffsetPagination
+    queryset = Port.objects.all().prefetch_related('categories').order_by('origin')
     serializer_class = PortSerializer
 
 
@@ -252,5 +350,9 @@ class FalloutViewSet(viewsets.ReadOnlyModelViewSet):
     """
     search_fields = ['maintainer', 'port__origin', 'env', 'category']
     filter_backends = (filters.SearchFilter,)
-    queryset = Fallout.objects.all().order_by('-date')
+    pagination_class = CappedLimitOffsetPagination
+    queryset = (Fallout.objects.all()
+                .select_related('port')
+                .prefetch_related('port__categories')
+                .order_by('-date'))
     serializer_class = FalloutSerializer

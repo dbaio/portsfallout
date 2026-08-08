@@ -1,6 +1,18 @@
-django<5
-requests
-scrapy
-djangorestframework
-python-dateutil
-dnspython
+# Versions tracked against the FreeBSD ports tree.
+#
+#   django             www/py-django52     (5.2 LTS; www/py-django42 is
+#                                           deprecated, expires 2026-08-31)
+#   djangorestframework www/py-djangorestframework
+#   requests           www/py-requests
+#   scrapy             www/py-scrapy
+#   python-dateutil    devel/py-python-dateutil
+#   dnspython          dns/py-dnspython
+#   mysqlclient        databases/py-mysqlclient
+
+django>=5.2.17,<6
+djangorestframework>=3.17.2
+requests>=2.34.2
+scrapy>=2.13.3
+python-dateutil>=2.9.0
+dnspython>=2.8.0
+mysqlclient>=2.2.8

@@ -46,8 +46,14 @@ urlpatterns = [
     path('', include('ports.urls')),
 ]
 
-if settings.DEBUG:
-    import debug_toolbar
-    urlpatterns = [
-        path('__debug__/', include(debug_toolbar.urls)),
-    ] + urlpatterns
+# Only mounted when the settings module enabled the toolbar, which never
+# happens with DEBUG off. `getattr` keeps this working with a settings module
+# that predates the flag.
+if getattr(settings, 'USE_DEBUG_TOOLBAR', settings.DEBUG):
+    try:
+        import debug_toolbar
+        urlpatterns = [
+            path('__debug__/', include(debug_toolbar.urls)),
+        ] + urlpatterns
+    except ImportError:
+        pass

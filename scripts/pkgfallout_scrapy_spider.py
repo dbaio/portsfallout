@@ -75,7 +75,9 @@ class PkgfalloutScrapySpider(scrapy.Spider):
         'HTTPCACHE_POLICY': CustomPolicyPkgFallout,
     }
 
-    def start_requests(self):
+    # Scrapy >= 2.13 renamed start_requests() to start(); since 2.17 the old
+    # name is ignored, which silently crawls nothing.
+    async def start(self):
         cur_month_raw = datetime.now()
         cur_month = cur_month_raw.strftime('%Y-%B')
 

@@ -1,0 +1,572 @@
+/*
+ * Copyright (c) 2020-2026 Danilo G. Baio <dbaio@FreeBSD.org>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* Light is the complete palette; the dark blocks only restate the tokens. */
+:root {
+  color-scheme: light;
+  --ground: #FBFAF9;
+  --surface: #FFFFFF;
+  --sunken: #F4F1EF;
+  --ink: #1A1614;
+  --muted: #6E6460;
+  --rule: #E8E3E0;
+  --rule-firm: #D6CFCB;
+  --accent: #800000;
+  --accent-soft: #F2E4E2;
+  --nav: #800000;
+  --nav-ink: #F7ECEA;
+  /* Chart series, validated for colour-vision deficiency against --surface. */
+  --s1: #A8453C;
+  --s2: #12719E;
+  --s3: #B5851F;
+  --s4: #6B4FBF;
+
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #171312;
+    --surface: #1F1A18;
+    --sunken: #241E1C;
+    --ink: #F0EBE8;
+    --muted: #A79C97;
+    --rule: #332B28;
+    --rule-firm: #4A3F3B;
+    --accent: #E07A70;
+    --accent-soft: #3A2320;
+    --nav: #4A0D0D;
+    --nav-ink: #F7ECEA;
+    --s1: #D46A61;
+    --s2: #3591BC;
+    --s3: #B78C38;
+    --s4: #8B76CE;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #171312;
+  --surface: #1F1A18;
+  --sunken: #241E1C;
+  --ink: #F0EBE8;
+  --muted: #A79C97;
+  --rule: #332B28;
+  --rule-firm: #4A3F3B;
+  --accent: #E07A70;
+  --accent-soft: #3A2320;
+  --nav: #4A0D0D;
+  --nav-ink: #F7ECEA;
+  --s1: #D46A61;
+  --s2: #3591BC;
+  --s3: #B78C38;
+  --s4: #8B76CE;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 16px/1.6 var(--sans);
+  -webkit-text-size-adjust: 100%;
+}
+
+a { color: var(--accent); text-underline-offset: 2px; }
+a:hover { text-decoration: underline; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+h1, h2, h3 { margin: 0; line-height: 1.2; letter-spacing: -0.015em; text-wrap: balance; }
+h1 { font-size: 1.7rem; font-weight: 700; }
+h2 { font-size: 1.3rem; font-weight: 650; }
+h3 { font-size: 1.05rem; font-weight: 650; }
+p { margin: 0 0 0.9rem; }
+
+.container { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+.page { flex: 1; padding: 26px 0 48px; }
+.stack { display: flex; flex-direction: column; gap: 22px; }
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* ---------- navbar ---------- */
+
+.nav {
+  background: var(--nav);
+  color: var(--nav-ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 0 20px;
+}
+.nav-inner {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.nav a { color: var(--nav-ink); text-decoration: none; }
+.nav-brand { display: flex; align-items: center; padding: 8px 12px 8px 0; }
+.nav-brand img { display: block; height: 34px; width: auto; }
+.nav-link {
+  padding: 14px 12px;
+  font-size: 0.94rem;
+  border-bottom: 2px solid transparent;
+}
+.nav-link:hover { background: rgba(255, 255, 255, 0.09); text-decoration: none; }
+.nav-link.active { border-bottom-color: var(--nav-ink); font-weight: 600; }
+.nav-sep { color: rgba(255, 255, 255, 0.35); padding: 0 6px; user-select: none; }
+.nav .spacer { flex: 1; }
+
+.theme-toggle {
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  text-transform: lowercase;
+  color: var(--nav-ink);
+  background: rgba(255, 255, 255, 0.11);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 3px;
+  padding: 3px 11px;
+  cursor: pointer;
+}
+.theme-toggle:hover { background: rgba(255, 255, 255, 0.2); }
+.theme-toggle::before { content: "\25D1\00a0"; }
+
+/* Dropdown without a line of JavaScript. */
+.nav-menu { position: relative; }
+.nav-menu > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 12px;
+  font-size: 0.94rem;
+  border-bottom: 2px solid transparent;
+}
+.nav-menu > summary::-webkit-details-marker { display: none; }
+.nav-menu > summary::after { content: " \25BE"; opacity: 0.75; }
+.nav-menu > summary:hover { background: rgba(255, 255, 255, 0.09); }
+.nav-menu.active > summary { border-bottom-color: var(--nav-ink); font-weight: 600; }
+.nav-menu > div {
+  position: absolute;
+  z-index: 20;
+  min-width: 220px;
+  background: var(--surface);
+  border: 1px solid var(--rule-firm);
+  border-radius: 4px;
+  padding: 5px 0;
+  box-shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.35);
+}
+.nav-menu > div a {
+  display: block;
+  padding: 7px 14px;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+.nav-menu > div a:hover { background: var(--sunken); text-decoration: none; }
+.nav-menu > div a.active { color: var(--accent); font-weight: 600; }
+
+/* ---------- filters ---------- */
+
+.filters {
+  border: 1px solid var(--rule-firm);
+  border-radius: 4px;
+  background: var(--surface);
+}
+.filters > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+}
+.filters > summary::-webkit-details-marker { display: none; }
+.filters > summary::before {
+  content: "\25B8";
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.filters[open] > summary::before { content: "\25BE"; }
+.filters[open] > summary { border-bottom: 1px solid var(--rule); }
+.filters .count { margin-left: auto; color: var(--muted); font-size: 0.8rem; }
+
+.chip {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 3px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.filter-form {
+  padding: 16px 14px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  align-items: start;
+}
+.field label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 4px;
+}
+.field input, .field select {
+  width: 100%;
+  padding: 6px 9px;
+  font-size: 0.88rem;
+  font-family: var(--mono);
+  color: var(--ink);
+  background: var(--ground);
+  border: 1px solid var(--rule-firm);
+  border-radius: 3px;
+}
+.field select[multiple] { height: 92px; padding: 4px; }
+.filter-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.btn {
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 6px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  background: var(--accent);
+  color: var(--surface);
+  cursor: pointer;
+}
+.btn:hover { filter: brightness(1.1); }
+
+/* ---------- alerts ---------- */
+
+.alert {
+  border: 1px solid var(--rule-firm);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  background: var(--surface);
+  padding: 11px 15px;
+  font-size: 0.9rem;
+}
+
+/* ---------- tables ---------- */
+
+.table-wrap {
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--surface);
+  overflow-x: auto;
+}
+.table-caption {
+  padding: 8px 13px;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.table-caption b { color: var(--ink); font-weight: 600; }
+
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+}
+table.data th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--sunken);
+  text-align: left;
+  padding: 8px 13px;
+  font-size: 0.69rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--rule-firm);
+  white-space: nowrap;
+}
+table.data th a { color: inherit; text-decoration: none; }
+table.data th a:hover { color: var(--accent); }
+table.data td {
+  padding: 6px 13px;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+table.data tbody tr:last-child td { border-bottom: 0; }
+table.data tbody tr:hover td { background: var(--sunken); }
+table.data td.num { text-align: right; }
+table.data .dim { color: var(--muted); }
+
+/* A value identical to the row above is kept in the DOM but hidden, so the
+   column still copies and reads correctly. Hover brings it back. */
+table.data .repeat { color: transparent; }
+table.data tbody tr:hover .repeat { color: var(--rule-firm); }
+
+.row-actions { display: flex; gap: 11px; }
+.row-actions a { color: var(--muted); text-decoration: none; font-size: 0.76rem; }
+.row-actions a:hover { color: var(--accent); text-decoration: underline; }
+.row-actions span { color: var(--rule-firm); font-size: 0.76rem; }
+
+/* ---------- summary tables (dashboard, build env, maintainers) ---------- */
+
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); }
+.card {
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+/* These sit four to a row, so the column has to survive being narrow. A fixed
+   layout keeps the count fully visible and truncates the label instead, which
+   `overflow: hidden` on the card would otherwise clip mid-number. */
+.card table.data { table-layout: fixed; font-size: 0.78rem; }
+.card table.data td { padding: 5px 12px; }
+.card table.data td:first-child { overflow: hidden; text-overflow: ellipsis; }
+/* 8.5em fits the widest count ("2,001 / 264") plus the cell padding. */
+.card table.data td.num { width: 9em; }
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 13px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--sunken);
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+.card-head a { font-size: 0.72rem; }
+
+/* ---------- KPI row ---------- */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.kpi { background: var(--surface); padding: 13px 15px; }
+.kpi .n {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 660;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.kpi .t {
+  display: block;
+  margin-top: 1px;
+  font-family: var(--mono);
+  font-size: 0.69rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* ---------- chart ---------- */
+
+.chart { border: 1px solid var(--rule); border-radius: 4px; background: var(--surface); padding: 14px 16px 10px; }
+.chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.chart-head .title { font-size: 0.88rem; font-weight: 600; }
+.legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.swatch { width: 9px; height: 9px; border-radius: 2px; flex: none; display: inline-block; }
+
+/* Series colours, shared by the legend swatches and the bar segments. */
+.s1 { background: var(--s1); }
+.s2 { background: var(--s2); }
+.s3 { background: var(--s3); }
+.s4 { background: var(--s4); }
+
+.plot {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 120px;
+  border-bottom: 1px solid var(--rule-firm);
+  background: repeating-linear-gradient(to top,
+    transparent, transparent 29px, var(--rule) 29px, var(--rule) 30px);
+}
+/* The bar gets its height inline as a percentage of the plot, and each segment
+   as a percentage of the bar, so both resolve against the 120px above. */
+.plot .bar {
+  flex: 1;
+  min-width: 4px;
+  display: flex;
+  flex-direction: column-reverse;
+  position: relative;
+  min-height: 2px;
+}
+.plot .bar > i { display: block; width: 100%; }
+.plot .bar > i:last-child { border-radius: 2px 2px 0 0; }
+/* Brighten the segments, not the bar: a filter on the bar would create a
+   stacking context and trap the tooltip inside it, behind the later bars. The
+   z-index lifts the hovered bar above its siblings, which are painted in DOM
+   order and would otherwise cover a tooltip that reaches over them. */
+.plot .bar:hover > i, .plot .bar:focus-visible > i { filter: brightness(1.14); }
+.plot .bar:hover, .plot .bar:focus-visible { z-index: 4; }
+.plot .tip {
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  background: var(--ink);
+  color: var(--ground);
+  font-family: var(--mono);
+  font-size: 0.71rem;
+  line-height: 1.45;
+  padding: 5px 9px;
+  border-radius: 3px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+.plot .bar:hover .tip, .plot .bar:focus-visible .tip { opacity: 1; }
+.plot .bar:nth-child(-n+6) .tip { left: 0; transform: none; }
+.plot .bar:nth-last-child(-n+6) .tip { left: auto; right: 0; transform: none; }
+.xaxis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 0.69rem;
+  color: var(--muted);
+}
+
+/* ---------- pagination ---------- */
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+}
+.pagination a, .pagination span {
+  display: block;
+  padding: 5px 11px;
+  border: 1px solid var(--rule-firm);
+  border-radius: 3px;
+  text-decoration: none;
+  color: var(--accent);
+}
+.pagination a:hover { background: var(--sunken); text-decoration: none; }
+.pagination .current { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.pagination .disabled { color: var(--rule-firm); }
+
+/* ---------- detail pages ---------- */
+
+table.detail { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+table.detail th, table.detail td {
+  text-align: left;
+  padding: 8px 13px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+table.detail th { width: 190px; color: var(--muted); font-weight: 600; font-size: 0.82rem; }
+table.detail td { font-family: var(--mono); font-size: 0.84rem; word-break: break-all; }
+table.detail tr:last-child th, table.detail tr:last-child td { border-bottom: 0; }
+
+/* ---------- footer ---------- */
+
+footer.site {
+  border-top: 1px solid var(--rule);
+  padding: 16px 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 700px) {
+  .nav-inner { gap: 0; }
+  .nav-link, .nav-menu > summary { padding: 11px 9px; font-size: 0.88rem; }
+  .nav-sep { display: none; }
+  h1 { font-size: 1.4rem; }
+  table.data th:first-child, table.data td:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--surface);
+  }
+  table.data th:first-child { background: var(--sunken); z-index: 2; }
+  table.data tbody tr:hover td:first-child { background: var(--sunken); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

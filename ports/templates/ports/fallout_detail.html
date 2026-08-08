@@ -1,62 +1,26 @@
 {% extends "ports/base.html" %}
-{% block title %}Fallout detail - {{fallout.port}}{% endblock %}
+{% block title %}Fallout detail - {{ fallout.port }}{% endblock %}
 {% block body_block %}
 
-<br />
-<h2>Fallout detail:</h2>
-<br />
-	<table class="table">
-		 <tr>
-			<th scope="col">Port:</th>
-			<td>{{fallout.port}}</td>
-		 </tr>
-		 <tr>
-			<td>Version:</td>
-			<td>{{fallout.version}}</td>
-		 </tr>
-		 <tr>
-			<td>Maintainer:</td>
-			<td>{{fallout.port.maintainer}}</td>
-		 </tr>
+<h1>Fallout detail</h1>
 
-		 <tr>
-			<td>Last committer:</td>
-			<td>{{fallout.last_committer}}</td>
-		 </tr>
-		 <tr>
-			<td>Build environment:</td>
-			<td>{{fallout.env}}</td>
-		 </tr>
-		 <tr>
-			<td>Category:</td>
-			<td>{{fallout.category}}</td>
-		 </tr>
-		 <tr>
-			<td>Flavor:</td>
-			<td>{{fallout.flavor}}</td>
-		 </tr>
-		 <tr>
-			<td>Report date:</td>
-			<td>{{fallout.date}}</td>
-		 </tr>
-		 <tr>
-			<td>Log URL:</td>
-			<td><a href="{{fallout.log_url}}" target="_blank">{{fallout.log_url}}</a></td>
-		 </tr>
-		 <tr>
-			<td>Build URL:</td>
-			<td><a href="{{fallout.build_url}}">{{fallout.build_url}}</a></td>
-		 </tr>
-		 <tr>
-			<td>Report URL:</td>
-			<td><a href="{{fallout.report_url}}">{{fallout.report_url}}</a></td>
-		 </tr>
-		 <tr>
-			<td>More info:</td>
-			<td>See the <a href="{% url 'ports:detail' fallout.port.id  %}"
-					class="badge badge-success">port detail</a> page for the fallout
-				history for this port. </td> </tr>
+<div class="table-wrap">
+  <table class="detail">
+    <tr><th scope="row">Port</th><td><a href="{% url 'ports:detail' fallout.port.id %}">{{ fallout.port }}</a></td></tr>
+    <tr><th scope="row">Version</th><td>{{ fallout.version }}</td></tr>
+    <tr><th scope="row">Maintainer</th><td>{{ fallout.port.maintainer }}</td></tr>
+    <tr><th scope="row">Last committer</th><td>{{ fallout.last_committer }}</td></tr>
+    <tr><th scope="row">Build environment</th><td>{{ fallout.env }}</td></tr>
+    <tr><th scope="row">Category</th><td>{{ fallout.category }}</td></tr>
+    <tr><th scope="row">Flavor</th><td>{{ fallout.flavor|default:"—" }}</td></tr>
+    <tr><th scope="row">Report date</th><td>{{ fallout.date }}</td></tr>
+    <tr><th scope="row">Log URL</th><td><a href="{{ fallout.log_url }}" target="_blank" rel="noopener">{{ fallout.log_url }}</a></td></tr>
+    <tr><th scope="row">Build URL</th><td><a href="{{ fallout.build_url }}">{{ fallout.build_url }}</a></td></tr>
+    <tr><th scope="row">Report URL</th><td><a href="{{ fallout.report_url }}">{{ fallout.report_url }}</a></td></tr>
+  </table>
+</div>
 
-	</table>
+<p class="muted small">See the <a href="{% url 'ports:detail' fallout.port.id %}">port detail</a>
+  page for the fallout history of this port.</p>
 
 {% endblock %}

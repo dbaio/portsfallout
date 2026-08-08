@@ -21,6 +21,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from datetime import timedelta
+
+import dns.exception
 import dns.resolver
 from django.core.management.base import BaseCommand
 from django.utils import timezone as dtz
@@ -47,7 +50,7 @@ class Command(BaseCommand):
         else:
             period = options['period']
 
-        period_date = dtz.make_aware(dtz.datetime.today() - dtz.timedelta(days=period))
+        period_date = dtz.now() - timedelta(days=period)
         Servers = Fallout.objects.filter(date__gte=period_date).values('server').distinct().order_by('server')
 
         for srv in Servers:
@@ -56,15 +59,8 @@ class Command(BaseCommand):
                 if verbosity > 0:
                     self.stdout.write(f"{srv['server']}")
 
-                try:
-                    dns_v4 = dns.resolver.query(srv['server'], 'A')
-                except:
-                    dns_v4 = False
-
-                try:
-                    dns_v6 = dns.resolver.query(srv['server'], 'AAAA')
-                except:
-                    dns_v6 = False
+                dns_v4 = self.resolve(srv['server'], 'A')
+                dns_v6 = self.resolve(srv['server'], 'AAAA')
 
                 if verbosity > 0:
                     if dns_v4:
@@ -80,7 +76,7 @@ class Command(BaseCommand):
 
                 try:
                     db_srv = Server.objects.get(name=srv['server'])
-                except:
+                except Server.DoesNotExist:
                     db_srv = None
 
                 if db_srv:
@@ -98,6 +94,15 @@ class Command(BaseCommand):
                 for env in srv_envs:
                     env_obj = add_build_env(env['env'])
                     db_srv.envs.add(env_obj)
+
+    def resolve(self, name, rdtype):
+        """Look up a record, reporting "not found" for any DNS failure"""
+
+        try:
+            return dns.resolver.resolve(name, rdtype)
+        except dns.exception.DNSException:
+            return False
+
 
 def add_build_env(name):
     e = BuildEnv.objects.get_or_create(name=name)[0]

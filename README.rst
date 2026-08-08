@@ -18,12 +18,15 @@ Install all requirements:
 
 ::
 
-    django
-    requests
-    scrapy
-    djangorestframework
-    python-dateutil
-    dnspython
+   $ pip install -r requirements.txt
+
+On FreeBSD the same set is available from the ports tree:
+
+::
+
+   www/py-django52  www/py-djangorestframework  www/py-requests
+   www/py-scrapy    devel/py-python-dateutil    dns/py-dnspython
+   databases/py-mysqlclient
 
 
 Copy the sample ``settings.py`` and configure your database access:
@@ -31,6 +34,31 @@ Copy the sample ``settings.py`` and configure your database access:
 ::
 
    $ cp portsfallout/settings_dev.py portsfallout/settings.py
+
+
+Settings that must not be committed are read from the environment:
+
+::
+
+   PORTSFALLOUT_SECRET_KEY          required in production
+   PORTSFALLOUT_DEBUG               "false" in production (default: true)
+   PORTSFALLOUT_ALLOWED_HOSTS       comma separated list
+   PORTSFALLOUT_CSRF_TRUSTED_ORIGINS  comma separated list, with the scheme
+   PORTSFALLOUT_CACHE_DIR           defaults to ./cache, keep it off /tmp
+
+Generate a secret key with:
+
+::
+
+   $ python -c 'from django.core.management.utils import get_random_secret_key; \
+       print(get_random_secret_key())'
+
+With ``PORTSFALLOUT_DEBUG=false`` the HTTPS related settings are enabled and
+the debug toolbar is never loaded. Confirm a deployment with:
+
+::
+
+   $ python manage.py check --deploy
 
 
 Create initial database:
@@ -114,4 +142,12 @@ Execution for keeping the database always updated:
    # Update DNS values of the pkg-fallout servers
    45  3  *  *  *  python manage.py server_update
    45  3  *  *  *  python manage.py server_update -v 0  # no output
+
+
+Tests
+-----
+
+::
+
+   $ python manage.py test ports
 

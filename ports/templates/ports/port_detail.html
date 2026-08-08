@@ -1,85 +1,69 @@
 {% extends "ports/base.html" %}
 {% load static %}
-{% block title %}Port detail - {{port.origin}}{% endblock %}
+{% block title %}Port detail - {{ port.origin }}{% endblock %}
 {% block body_block %}
 
-<br />
-<h1>Port detail:</h1>
-<br />
-<table class="table">
-	 <tr>
-		<th scope="col">Port:</th>
-		<td>{{port.origin}}</td>
-	 </tr>
-	 <tr>
-		<td>Maintainer:</td>
-		<td>{{port.maintainer}}</td>
-	 </tr>
-	 <tr>
-		<td>URLs:</td>
-		<td>
-			<a href="https://www.freshports.org/{{port.origin}}" class="badge badge-dark">FreshPorts</a>
-		</td>
-	 </tr>
-</table>
-<br />
+<h1>{{ port.origin }}</h1>
 
-<h3>Fallout List</h3>
-<div class="table-responsive">
-<table class="table table-sm table-striped">
-  <thead>
-    <tr>
-      <th scope="col" class="text-nowrap">port</th>
-      <th scope="col" class="text-nowrap">version</th>
-      <th scope="col" class="text-nowrap">build environment</th>
-      <th scope="col" class="text-nowrap">category</th>
-      <th scope="col" class="text-nowrap">
-          <a href="#" id="toggle-timezone-header" title="Click to switch between UTC and your local timezone">date (UTC)</a>
-      </th>
-      <th scope="col" class="text-nowrap">urls</th>
-    </tr>
-  </thead>
-  <tbody>
-	{% for fallout in fallout_list %}
-    <tr>
-      <td class="text-nowrap">
-        <small><a href="{% url 'ports:fdetail' fallout.id  %}">
-        {% if fallout.flavor %}
-          {{ fallout.port }}@{{ fallout.flavor }}
-        {% else %}
-          {{ fallout.port }}
-        {% endif %}
-        </a></small>
-      </td>
-      <td class="text-nowrap"><small>{{ fallout.version }}</small></td>
-      <td class="text-nowrap"><small>{{ fallout.env }}</small></td>
-      <td class="text-nowrap"><small>{{ fallout.category }}</small></td>
-      <td class="text-nowrap">
-            <small>
-                <span class="utc-time" data-utc="{{ fallout.date.isoformat }}"></span>
-            </small>
-      </td>
-      <td class="text-nowrap">
-        <a href="{{fallout.log_url }}" class="badge badge-danger" target="_blank">log</a>
-    {% if fallout.report_url %}
-        <a href="{{ fallout.report_url }}" class="badge badge-info">report</a>
-    {% else %}
-        <span class="badge badge-light">report</span>
-    {% endif %}
-        <a href="{{fallout.build_url }}" class="badge badge-secondary">build queue</a>
-      </td>
-    </tr>
-	{% endfor %}
-  </tbody>
-</table>
+<div class="table-wrap">
+  <table class="detail">
+    <tr><th scope="row">Maintainer</th><td><a href="{% url 'ports:fallout' %}?maintainer={{ port.maintainer|urlencode:"" }}">{{ port.maintainer }}</a></td></tr>
+    <tr><th scope="row">Comment</th><td>{{ port.comment|default:"—" }}</td></tr>
+    <tr><th scope="row">Categories</th><td>{% for category in port.categories.all %}{{ category }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+    <tr><th scope="row">Links</th><td>
+      <span class="row-actions">
+        <a href="https://www.freshports.org/{{ port.origin }}">FreshPorts</a>
+        {% if port.www %}<a href="{{ port.www }}" rel="noopener">upstream</a>{% endif %}
+      </span>
+    </td></tr>
+  </table>
 </div>
 
-	{% if fallout_list|length >= 50 %}
-    <div>
-      <p>See the <a href="{% url 'ports:fallout' %}?port={{port.origin|urlencode:""}}$" class="badge badge-success">fallout history</a>
-        page for more entries for this port.</small></p>
-    </div>
-	{% endif %}
+<h2>Fallout list</h2>
+
+{% if fallout_list %}
+<div class="table-wrap">
+  <table class="data">
+    <thead>
+      <tr>
+        <th scope="col">version</th>
+        <th scope="col">build environment</th>
+        <th scope="col">category</th>
+        <th scope="col">
+          <a href="#" id="toggle-timezone-header" title="Click to switch between UTC and your local timezone">date (UTC)</a>
+        </th>
+        <th scope="col">urls</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for fallout in fallout_list %}
+      <tr>
+        <td{% ifchanged fallout.version %}{% else %} class="repeat"{% endifchanged %}>{{ fallout.version }}{% if fallout.flavor %}@{{ fallout.flavor }}{% endif %}</td>
+        <td{% ifchanged fallout.env %}{% else %} class="repeat"{% endifchanged %}>{{ fallout.env }}</td>
+        <td{% ifchanged fallout.category %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ fallout.category }}</td>
+        <td class="dim"><span class="utc-time" data-utc="{{ fallout.date.isoformat }}"></span></td>
+        <td>
+          <span class="row-actions">
+            <a href="{% url 'ports:fdetail' fallout.id %}">detail</a>
+            <a href="{{ fallout.log_url }}" target="_blank" rel="noopener">log</a>
+            {% if fallout.report_url %}<a href="{{ fallout.report_url }}">report</a>{% else %}<span>report</span>{% endif %}
+            <a href="{{ fallout.build_url }}">build queue</a>
+          </span>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if fallout_list|length >= 50 %}
+  <p class="muted small">Showing the 50 most recent. See the
+    <a href="{% url 'ports:fallout' %}?port={{ port.origin|urlencode:"" }}$">fallout history</a>
+    for every entry of this port.</p>
+{% endif %}
+{% else %}
+  <p class="muted">No pkg-fallout recorded for this port.</p>
+{% endif %}
 
 <script src="{% static 'js/datetime_toggle.js' %}?v=1.0.0"></script>
 {% endblock %}
