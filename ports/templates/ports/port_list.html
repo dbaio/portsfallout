@@ -45,8 +45,8 @@
     {% for port in port_list %}
       <tr>
         <td><a href="{% url 'ports:detail' port.id %}">{{ port.origin }}</a></td>
-        <td{% ifchanged port.maintainer %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ port.maintainer }}</td>
-        <td class="num">{{ port.fcount|intcomma }}</td>
+        <td data-label="maintainer"{% ifchanged port.maintainer %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ port.maintainer }}</td>
+        <td data-label="fallouts" class="num">{{ port.fcount|intcomma }}</td>
       </tr>
     {% endfor %}
     </tbody>

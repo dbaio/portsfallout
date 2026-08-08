@@ -81,11 +81,11 @@
         <td{% ifchanged fallout.port fallout.flavor %}{% else %} class="repeat"{% endifchanged %}>
           <a href="{% url 'ports:fdetail' fallout.id %}">{{ fallout.port }}{% if fallout.flavor %}@{{ fallout.flavor }}{% endif %}</a>
         </td>
-        <td{% ifchanged fallout.maintainer %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ fallout.maintainer }}</td>
-        <td{% ifchanged fallout.env %}{% else %} class="repeat"{% endifchanged %}>{{ fallout.env }}</td>
-        <td{% ifchanged fallout.category %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ fallout.category }}</td>
-        <td class="dim"><span class="utc-time" data-utc="{{ fallout.date.isoformat }}"></span></td>
-        <td>
+        <td data-label="maintainer"{% ifchanged fallout.maintainer %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ fallout.maintainer }}</td>
+        <td data-label="build env"{% ifchanged fallout.env %}{% else %} class="repeat"{% endifchanged %}>{{ fallout.env }}</td>
+        <td data-label="category"{% ifchanged fallout.category %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ fallout.category }}</td>
+        <td data-label="date" class="dim"><span class="utc-time" data-utc="{{ fallout.date.isoformat }}"></span></td>
+        <td data-label="urls">
           <span class="row-actions">
             <a href="{{ fallout.log_url }}" target="_blank" rel="noopener">log</a>
             {% if fallout.report_url %}<a href="{{ fallout.report_url }}">report</a>{% else %}<span>report</span>{% endif %}

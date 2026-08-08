@@ -19,8 +19,8 @@
     {% for obj in fallout_env %}
       <tr>
         <td><a href="{% url 'ports:fallout' %}?env={{ obj.env|urlencode:"" }}">{{ obj.env }}</a></td>
-        <td class="num">{{ obj.total|intcomma }}</td>
-        <td class="num dim">{{ obj.total_ports|intcomma }}</td>
+        <td data-label="fallouts" class="num">{{ obj.total|intcomma }}</td>
+        <td data-label="unique ports" class="num dim">{{ obj.total_ports|intcomma }}</td>
       </tr>
     {% endfor %}
     </tbody>

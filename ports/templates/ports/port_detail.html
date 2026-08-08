@@ -39,10 +39,10 @@
     {% for fallout in fallout_list %}
       <tr>
         <td{% ifchanged fallout.version %}{% else %} class="repeat"{% endifchanged %}>{{ fallout.version }}{% if fallout.flavor %}@{{ fallout.flavor }}{% endif %}</td>
-        <td{% ifchanged fallout.env %}{% else %} class="repeat"{% endifchanged %}>{{ fallout.env }}</td>
-        <td{% ifchanged fallout.category %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ fallout.category }}</td>
-        <td class="dim"><span class="utc-time" data-utc="{{ fallout.date.isoformat }}"></span></td>
-        <td>
+        <td data-label="build env"{% ifchanged fallout.env %}{% else %} class="repeat"{% endifchanged %}>{{ fallout.env }}</td>
+        <td data-label="category"{% ifchanged fallout.category %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ fallout.category }}</td>
+        <td data-label="date" class="dim"><span class="utc-time" data-utc="{{ fallout.date.isoformat }}"></span></td>
+        <td data-label="urls">
           <span class="row-actions">
             <a href="{% url 'ports:fdetail' fallout.id %}">detail</a>
             <a href="{{ fallout.log_url }}" target="_blank" rel="noopener">log</a>

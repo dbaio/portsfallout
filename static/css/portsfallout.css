@@ -557,14 +557,71 @@ footer.site {
   .nav-inner { gap: 0; }
   .nav-link, .nav-menu > summary { padding: 11px 9px; font-size: 0.88rem; }
   .nav-sep { display: none; }
+  /* Without this the toggle is pushed onto a line of its own. */
+  .nav .spacer { display: none; }
+  .theme-toggle { margin-left: 6px; }
   h1 { font-size: 1.4rem; }
-  table.data th:first-child, table.data td:first-child {
-    position: sticky;
-    left: 0;
-    background: var(--surface);
+  .container { padding: 0 14px; }
+
+  /* A six column table does not fit a phone, and side scrolling a list you
+     are skimming is miserable. Each row becomes a labelled block instead.
+     Scoped to .table-wrap so the two column dashboard cards stay as they are. */
+  .table-wrap { overflow-x: visible; }
+  .table-wrap table.data,
+  .table-wrap table.data tbody,
+  .table-wrap table.data tr,
+  .table-wrap table.data td {
+    display: block;
+    width: auto;
   }
-  table.data th:first-child { background: var(--sunken); z-index: 2; }
-  table.data tbody tr:hover td:first-child { background: var(--sunken); }
+  /* Kept for screen readers rather than removed outright. */
+  .table-wrap table.data thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .table-wrap table.data tr {
+    padding: 11px 13px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .table-wrap table.data tbody tr:last-child { border-bottom: 0; }
+  .table-wrap table.data td {
+    border: 0;
+    padding: 1px 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .table-wrap table.data td.num { text-align: left; }
+  .table-wrap table.data td[data-label]::before {
+    content: attr(data-label);
+    display: inline-block;
+    min-width: 8.5em;
+    color: var(--muted);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  /* The first cell heads the block, so it needs no label. */
+  .table-wrap table.data td:first-child {
+    font-size: 0.9rem;
+    margin-bottom: 3px;
+  }
+  .table-wrap table.data td:first-child::before { content: none; }
+  /* Each block stands alone here, so a value repeated from the row above is
+     information rather than noise. */
+  .table-wrap table.data td.repeat { color: inherit; }
+  .table-wrap table.data tbody tr:hover td { background: none; }
+
+  /* Same treatment for the detail pages, whose label column is 190px wide. */
+  table.detail, table.detail tbody, table.detail tr, table.detail th, table.detail td {
+    display: block;
+    width: auto;
+  }
+  table.detail tr { padding: 9px 13px; border-bottom: 1px solid var(--rule); }
+  table.detail th, table.detail td { border: 0; padding: 0; }
+  table.detail th { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; }
 }
 
 @media (prefers-reduced-motion: reduce) {

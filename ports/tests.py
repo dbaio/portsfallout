@@ -209,6 +209,55 @@ class PaginationTests(TestCase):
 
 
 @no_cache
+class MobileLabelTests(TestCase):
+    """Below 700px the list tables stack, and each cell shows `data-label`
+
+    A column added without one renders as a value with no name on a phone,
+    which is invisible from a desktop browser.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        category = Category.objects.create(name='www')
+        cls.port = Port.objects.create(origin='www/nginx', name='nginx',
+                                       maintainer='dbaio@FreeBSD.org', main_category='www')
+        cls.port.categories.add(category)
+        Fallout.objects.create(
+            port=cls.port, env='head-amd64-default', version='1.0', category='build',
+            maintainer='dbaio@FreeBSD.org', last_committer='x@FreeBSD.org', date=dtz.now(),
+            log_url='https://pkg-status.freebsd.org/beefy18/x.log',
+            build_url='https://pkg-status.freebsd.org/beefy18/',
+            report_url='https://lists.freebsd.org/1.html')
+
+    def unlabelled_cells(self, html):
+        """Cells past the first in a row, inside a .table-wrap, with no label"""
+
+        wraps = re.findall(r'<div class="table-wrap">(.*?)</table>', html, re.S)
+        missing = []
+        for wrap in wraps:
+            for row in re.findall(r'<tr>(.*?)</tr>', wrap, re.S):
+                for cell in re.findall(r'<td([^>]*)>', row)[1:]:
+                    if 'data-label' not in cell:
+                        missing.append(cell.strip())
+        return missing
+
+    def test_list_pages_label_every_cell(self):
+        for url in [reverse('ports:fallout'), reverse('ports:list'),
+                    reverse('ports:server'), reverse('ports:build_env'),
+                    reverse('ports:maintainer'),
+                    reverse('ports:detail', args=[self.port.id])]:
+            with self.subTest(url=url):
+                html = self.client.get(url).content.decode()
+                self.assertEqual(self.unlabelled_cells(html), [])
+
+    def test_the_dashboard_cards_are_left_alone(self):
+        """They are two columns and already read fine on a phone"""
+        html = self.client.get(reverse('ports:index')).content.decode()
+        self.assertNotIn('table-wrap', html)
+        self.assertNotIn('data-label', html)
+
+
+@no_cache
 class ThemeToggleTests(TestCase):
 
     def test_the_toggle_and_its_script_are_present(self):

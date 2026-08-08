@@ -18,14 +18,14 @@
     {% for server in server_list %}
       <tr>
         <td><a href="https://{{ server.name }}">{{ server.name }}</a></td>
-        <td style="white-space: normal">
+        <td data-label="build env" style="white-space: normal">
           <span class="row-actions" style="flex-wrap: wrap">
           {% for srv_env in server.envs.all %}
             <a href="{% url 'ports:fallout' %}?env={{ srv_env|urlencode:"" }}">{{ srv_env }}</a>
           {% endfor %}
           </span>
         </td>
-        <td>
+        <td data-label="connectivity">
           <span class="dim">
             {% if server.v4 %}IPv4{% else %}<s>IPv4</s>{% endif %}
             {% if server.v6 %}IPv6{% else %}<s>IPv6</s>{% endif %}
