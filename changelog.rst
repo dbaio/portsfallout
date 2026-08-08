@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 1.10.1
+--------------
+
+* Stack the list tables into labelled blocks on narrow screens, instead of
+  scrolling six columns sideways
+* Stack the detail pages the same way
+* Keep the theme toggle on the navbar's first line on a phone
+
 Version 1.10.0
 --------------
 
