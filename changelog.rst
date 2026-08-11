@@ -1,6 +1,17 @@
 Changelog
 =========
 
+Version 1.11.0
+--------------
+
+* Split the build environment name into its tree and its ports branch, and
+  mark the quarterly branch with a rail
+* Colour the build phase by family, so the fallouts that did not die in an
+  ordinary build stand out from the ones that did
+* Chip the build environments on the server list, and give the connectivity
+  column a state dot instead of a strikethrough alone
+* Lead the row actions with the log link
+
 Version 1.10.1
 --------------
 
