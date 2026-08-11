@@ -1,4 +1,6 @@
 {% extends "ports/base.html" %}
+{% load build_env %}
+{% load phase %}
 {% block title %}Fallout detail - {{ fallout.port }}{% endblock %}
 {% block body_block %}
 
@@ -10,8 +12,8 @@
     <tr><th scope="row">Version</th><td>{{ fallout.version }}</td></tr>
     <tr><th scope="row">Maintainer</th><td>{{ fallout.port.maintainer }}</td></tr>
     <tr><th scope="row">Last committer</th><td>{{ fallout.last_committer }}</td></tr>
-    <tr><th scope="row">Build environment</th><td>{{ fallout.env }}</td></tr>
-    <tr><th scope="row">Category</th><td>{{ fallout.category }}</td></tr>
+    <tr><th scope="row">Build environment</th><td>{% with parts=fallout.env|env_split %}{{ parts.head }}<span class="env-branch">{{ parts.branch }}</span>{% endwith %}</td></tr>
+    <tr><th scope="row">Category</th><td>{% if fallout.category %}<span class="phase phase-{{ fallout.category|phase_family }}">{{ fallout.category }}</span>{% else %}—{% endif %}</td></tr>
     <tr><th scope="row">Flavor</th><td>{{ fallout.flavor|default:"—" }}</td></tr>
     <tr><th scope="row">Report date</th><td>{{ fallout.date }}</td></tr>
     <tr><th scope="row">Log URL</th><td><a href="{{ fallout.log_url }}" target="_blank" rel="noopener">{{ fallout.log_url }}</a></td></tr>

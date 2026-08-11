@@ -2,6 +2,8 @@
 {% load static %}
 {% block title %}Fallout list{% endblock %}
 {% load humanize %}
+{% load build_env %}
+{% load phase %}
 {% block body_block %}
 
 <details class="filters" {% if has_filter %}open{% endif %}>
@@ -82,13 +84,15 @@
           <a href="{% url 'ports:fdetail' fallout.id %}">{{ fallout.port }}{% if fallout.flavor %}@{{ fallout.flavor }}{% endif %}</a>
         </td>
         <td data-label="maintainer"{% ifchanged fallout.maintainer %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ fallout.maintainer }}</td>
-        <td data-label="build env"{% ifchanged fallout.env %}{% else %} class="repeat"{% endifchanged %}>{{ fallout.env }}</td>
-        <td data-label="category"{% ifchanged fallout.category %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ fallout.category }}</td>
+        <td data-label="build env"{% ifchanged fallout.env %}{% else %} class="repeat"{% endifchanged %}>{% if fallout.env %}{% with parts=fallout.env|env_split %}<span class="env-rail{% if parts.quarterly %} quarterly{% endif %}">{{ parts.head }}<span class="env-branch">{{ parts.branch }}</span></span>{% endwith %}{% endif %}</td>
+        <td data-label="category">{% if fallout.category %}<span class="phase phase-{{ fallout.category|phase_family }}">{{ fallout.category }}</span>{% endif %}</td>
         <td data-label="date" class="dim"><span class="utc-time" data-utc="{{ fallout.date.isoformat }}"></span></td>
         <td data-label="urls">
           <span class="row-actions">
-            <a href="{{ fallout.log_url }}" target="_blank" rel="noopener">log</a>
-            {% if fallout.report_url %}<a href="{{ fallout.report_url }}">report</a>{% else %}<span>report</span>{% endif %}
+            <a class="primary" href="{{ fallout.log_url }}" target="_blank" rel="noopener">log</a>
+            <span class="sep">·</span>
+            {% if fallout.report_url %}<a href="{{ fallout.report_url }}">report</a>{% else %}<span><s>report</s></span>{% endif %}
+            <span class="sep">·</span>
             <a href="{% url 'ports:detail' fallout.port.id %}">port</a>
           </span>
         </td>

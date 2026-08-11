@@ -42,6 +42,17 @@
   --s2: #12719E;
   --s3: #B5851F;
   --s4: #6B4FBF;
+  /* Build phase families. Compilation is missing because it borrows --accent:
+     it is the family that needs someone to act, so it gets the site colour and
+     the only bold weight in the column. */
+  --ph-src: #14688F;
+  --ph-src-soft: #DEEBF3;
+  --ph-dep: #4E3596;
+  --ph-dep-soft: #E5E0F4;
+  --ph-pkg: #7A5910;
+  --ph-pkg-soft: #F3E9D2;
+  /* State, kept apart from --accent: maroon is identity, this is a reading. */
+  --ok: #2E7248;
 
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -65,6 +76,13 @@
     --s2: #3591BC;
     --s3: #B78C38;
     --s4: #8B76CE;
+    --ph-src: #5AA6C8;
+    --ph-src-soft: #16303B;
+    --ph-dep: #9E8AD8;
+    --ph-dep-soft: #282242;
+    --ph-pkg: #C79A44;
+    --ph-pkg-soft: #342B18;
+    --ok: #6FBE8C;
   }
 }
 
@@ -85,6 +103,13 @@
   --s2: #3591BC;
   --s3: #B78C38;
   --s4: #8B76CE;
+  --ph-src: #5AA6C8;
+  --ph-src-soft: #16303B;
+  --ph-dep: #9E8AD8;
+  --ph-dep-soft: #282242;
+  --ph-pkg: #C79A44;
+  --ph-pkg-soft: #342B18;
+  --ok: #6FBE8C;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -349,10 +374,102 @@ table.data .dim { color: var(--muted); }
 table.data .repeat { color: transparent; }
 table.data tbody tr:hover .repeat { color: var(--rule-firm); }
 
-.row-actions { display: flex; gap: 11px; }
+.row-actions { display: flex; align-items: center; gap: 7px; }
 .row-actions a { color: var(--muted); text-decoration: none; font-size: 0.76rem; }
 .row-actions a:hover { color: var(--accent); text-decoration: underline; }
 .row-actions span { color: var(--rule-firm); font-size: 0.76rem; }
+/* The log is what anyone landing on a fallout row actually wants, so it leads
+   the group by weight. Not by colour: these stay muted until hovered, the same
+   as every other secondary link on the site. */
+.row-actions a.primary { font-weight: 650; }
+.row-actions .sep { color: var(--rule-firm); font-size: 0.76rem; user-select: none; }
+
+/* ---------- build environment ---------- */
+
+/* `144arm64-quarterly` is two fields in one string: the tree, and the ports
+   branch it was built from. The branch is the most repeated part of the
+   column, so it is dimmed rather than dropped. */
+.env-branch { color: var(--muted); }
+
+/* On the server list the environments are filter links that used to run
+   together separated by nothing but a space. The chip gives each one an edge
+   and an obvious click target; it stays in the neutral tokens, so a row of
+   them reads no louder than the plain text it replaces. */
+.env-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.env-chip {
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: var(--muted);
+  background: var(--sunken);
+  border: 1px solid var(--rule-firm);
+  border-radius: 3px;
+  padding: 1px 7px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.env-chip:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  text-decoration: none;
+}
+
+/* In the fallout tables the same environment covers hundreds of rows, where a
+   chip would be noise. A rail carries the branch instead — solid for default,
+   dashed for quarterly — which is a shape, so it survives being printed,
+   greyscaled, or read by someone who cannot separate the hues. */
+.env-rail {
+  display: inline-block;
+  padding-left: 8px;
+  border-left: 3px solid var(--rule-firm);
+}
+.env-rail.quarterly { border-left-style: dashed; }
+/* A repeated cell hides its text, so the rail and the dimmed branch have to go
+   with it or the row is left with a floating mark against nothing. */
+table.data td.repeat .env-branch { color: inherit; }
+table.data td.repeat .env-rail { border-left-color: transparent; }
+table.data tbody tr:hover td.repeat .env-rail { border-left-color: var(--rule-firm); }
+
+/* ---------- build phase ---------- */
+
+/* `category` is the poudriere phase the build died in. Grouped into four
+   families it answers the question a maintainer opens the list with: is this
+   my port, or did something upstream of it fall over first?
+
+   Nearly four fallouts in five die in the build family, so that one is the
+   expected outcome rather than the interesting one, and it takes the neutral
+   chip. The other three carry the colour: what earns a glance down this column
+   is the row that is *not* an ordinary build break. Colouring the majority
+   would spend the loudest treatment on the least surprising rows and leave the
+   exceptions to hide among them. */
+.phase {
+  display: inline-block;
+  font-size: 0.74rem;
+  line-height: 1.55;
+  border-radius: 3px;
+  padding: 1px 7px 1px 6px;
+  border-left: 3px solid;
+  white-space: nowrap;
+}
+.phase-build { color: var(--muted); background: var(--sunken); border-left-color: var(--rule-firm); }
+.phase-dep { color: var(--ph-dep); background: var(--ph-dep-soft); border-left-color: var(--ph-dep); }
+.phase-src { color: var(--ph-src); background: var(--ph-src-soft); border-left-color: var(--ph-src); }
+.phase-pkg { color: var(--ph-pkg); background: var(--ph-pkg-soft); border-left-color: var(--ph-pkg); }
+/* Not one of the families, so it does not wear the family shape either. */
+.phase-none { color: var(--muted); background: none; border-left-color: transparent; padding-left: 0; }
+
+/* ---------- connectivity ---------- */
+
+/* Present and absent used to differ by a strikethrough alone, in a column that
+   was otherwise one flat grey. The dot repeats the state as a shape, so the
+   colour accelerates the read rather than being the whole of it. */
+.conn { display: inline-flex; gap: 12px; }
+.conn > span { display: inline-flex; align-items: center; gap: 5px; }
+.conn .off { color: var(--muted); }
+.conn i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.conn .on i { background: var(--ok); }
+.conn .off i { border: 1px solid var(--rule-firm); }
+.conn .off s { text-decoration-color: var(--rule-firm); }
 
 /* ---------- summary tables (dashboard, build env, maintainers) ---------- */
 
@@ -610,8 +727,11 @@ footer.site {
   }
   .table-wrap table.data td:first-child::before { content: none; }
   /* Each block stands alone here, so a value repeated from the row above is
-     information rather than noise. */
+     information rather than noise. Bringing the text back has to bring its
+     rail and its dimmed branch back with it. */
   .table-wrap table.data td.repeat { color: inherit; }
+  .table-wrap table.data td.repeat .env-branch { color: var(--muted); }
+  .table-wrap table.data td.repeat .env-rail { border-left-color: var(--rule-firm); }
   .table-wrap table.data tbody tr:hover td { background: none; }
 
   /* Same treatment for the detail pages, whose label column is 190px wide. */

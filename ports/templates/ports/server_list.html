@@ -2,6 +2,7 @@
 {% block title %}Server list{% endblock %}
 {% block body_block %}
 {% load proxy %}
+{% load build_env %}
 
 <h1>Servers</h1>
 
@@ -19,16 +20,16 @@
       <tr>
         <td><a href="https://{{ server.name }}">{{ server.name }}</a></td>
         <td data-label="build env" style="white-space: normal">
-          <span class="row-actions" style="flex-wrap: wrap">
-          {% for srv_env in server.envs.all %}
-            <a href="{% url 'ports:fallout' %}?env={{ srv_env|urlencode:"" }}">{{ srv_env }}</a>
-          {% endfor %}
+          <span class="env-chips">
+          {% for srv_env in server.envs.all %}{% with parts=srv_env|env_split %}
+            <a class="env-chip" href="{% url 'ports:fallout' %}?env={{ srv_env|urlencode:"" }}">{{ parts.head }}<span class="env-branch">{{ parts.branch }}</span></a>
+          {% endwith %}{% endfor %}
           </span>
         </td>
         <td data-label="connectivity">
-          <span class="dim">
-            {% if server.v4 %}IPv4{% else %}<s>IPv4</s>{% endif %}
-            {% if server.v6 %}IPv6{% else %}<s>IPv6</s>{% endif %}
+          <span class="conn">
+            <span class="{% if server.v4 %}on{% else %}off{% endif %}"><i></i>{% if server.v4 %}IPv4{% else %}<s>IPv4</s>{% endif %}</span>
+            <span class="{% if server.v6 %}on{% else %}off{% endif %}"><i></i>{% if server.v6 %}IPv6{% else %}<s>IPv6</s>{% endif %}</span>
           </span>
           &nbsp;<a href="https://pkg-status.freebsd.org/{{ server.name|get_short_name }}/">proxy</a>
         </td>

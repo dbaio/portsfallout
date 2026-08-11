@@ -1,6 +1,7 @@
 {% extends "ports/base.html" %}
 {% block title %}Build env list{% endblock %}
 {% load humanize %}
+{% load build_env %}
 {% block body_block %}
 
 <h1>Fallouts by build environment</h1>
@@ -18,7 +19,7 @@
     <tbody>
     {% for obj in fallout_env %}
       <tr>
-        <td><a href="{% url 'ports:fallout' %}?env={{ obj.env|urlencode:"" }}">{{ obj.env }}</a></td>
+        <td>{% with parts=obj.env|env_split %}<a href="{% url 'ports:fallout' %}?env={{ obj.env|urlencode:"" }}">{{ parts.head }}<span class="env-branch">{{ parts.branch }}</span></a>{% endwith %}</td>
         <td data-label="fallouts" class="num">{{ obj.total|intcomma }}</td>
         <td data-label="unique ports" class="num dim">{{ obj.total_ports|intcomma }}</td>
       </tr>

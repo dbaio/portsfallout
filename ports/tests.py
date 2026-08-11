@@ -33,7 +33,8 @@ from django.urls import reverse
 from django.utils import timezone as dtz
 
 from ports.models import Category, Fallout, Port
-from ports.templatetags.link_badge import BADGES, get_link_badge
+from ports.templatetags.build_env import env_split
+from ports.templatetags.phase import phase_family
 from ports.templatetags.proxy import get_proxy, get_short_name
 from ports.utils import (MAX_REGEX_LENGTH, InvalidRegexError, IsRegex,
                          ValidateRegex)
@@ -345,7 +346,39 @@ class TemplateTagTests(TestCase):
     def test_get_short_name(self):
         self.assertEqual(get_short_name('Beefy18.nyi.FreeBSD.org'), 'beefy18')
 
-    def test_get_link_badge_cycles(self):
-        self.assertEqual(get_link_badge(1), BADGES[0])
-        self.assertEqual(get_link_badge(len(BADGES)), BADGES[-1])
-        self.assertEqual(get_link_badge(len(BADGES) + 1), BADGES[0])
+    def test_env_split_separates_the_branch(self):
+        self.assertEqual(env_split('144arm64-quarterly'),
+                         {'head': '144arm64', 'branch': '-quarterly',
+                          'quarterly': True})
+        self.assertEqual(env_split('main-amd64-default'),
+                         {'head': 'main-amd64', 'branch': '-default',
+                          'quarterly': False})
+
+    def test_env_split_keeps_unknown_names_whole(self):
+        # The two halves have to concatenate back into the original, so a name
+        # that ends in something else must not lose its tail.
+        for name in ('143i386-experimental', 'somethingelse', ''):
+            parts = env_split(name)
+            self.assertEqual(parts['head'], name)
+            self.assertEqual(parts['branch'], '')
+            self.assertFalse(parts['quarterly'])
+
+    def test_phase_family_groups_known_phases(self):
+        self.assertEqual(phase_family('build'), 'build')
+        self.assertEqual(phase_family('configure'), 'build')
+        self.assertEqual(phase_family('lib-depends'), 'dep')
+        self.assertEqual(phase_family('checksum'), 'src')
+        self.assertEqual(phase_family('package'), 'pkg')
+
+    def test_phase_family_ignores_the_reason_suffix(self):
+        # Real data carries these: the tail says how the build died, not where.
+        self.assertEqual(phase_family('build/runaway'), 'build')
+        self.assertEqual(phase_family('configure/runaway'), 'build')
+        self.assertEqual(phase_family('package/timeout'), 'pkg')
+        self.assertEqual(phase_family('extract/timeout'), 'src')
+
+    def test_phase_family_falls_back_for_anything_else(self):
+        # The phase is whatever the log reported, so it still has to render.
+        self.assertEqual(phase_family('some-new-poudriere-phase'), 'none')
+        self.assertEqual(phase_family(''), 'none')
+        self.assertEqual(phase_family(None), 'none')

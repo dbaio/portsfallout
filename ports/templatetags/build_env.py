@@ -25,19 +25,28 @@ from django import template
 
 register = template.Library()
 
-BADGES = ['badge-secondary',
-          'badge-info',
-          'badge-light',
-          'badge-dark',
-          'badge-warning',
-          'badge-primary',
-          'badge-success',
-          'badge-danger',
-          ]
+BRANCHES = ('default', 'quarterly')
 
 
 @register.filter(is_safe=True)
-def get_link_badge(loop_count):
-    """Pick a badge class, cycling through the list for long loops"""
+def env_split(env):
+    """Split a build environment name into its tree and its ports branch
 
-    return BADGES[(loop_count - 1) % len(BADGES)]
+    ``144arm64-quarterly`` and ``main-amd64-default`` are two fields wearing one
+    string: the tree being built, and the ports branch it was built from. The
+    branch is the most repeated part of the column, so templates render it
+    dimmed and use it to pick the rail style.
+
+    The suffix keeps its leading dash, which lets a template concatenate the two
+    halves back into the original name without knowing how it was cut. A name
+    that does not end in a known branch comes back whole in ``head``, so an
+    environment this does not recognise still renders as itself.
+    """
+    name = str(env or '').strip()
+    head, sep, last = name.rpartition('-')
+
+    if sep and last.lower() in BRANCHES:
+        return {'head': head, 'branch': sep + last,
+                'quarterly': last.lower() == 'quarterly'}
+
+    return {'head': name, 'branch': '', 'quarterly': False}
