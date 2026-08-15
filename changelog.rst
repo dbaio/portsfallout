@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 1.12.0
+--------------
+
+* Address ports by their origin instead of their id, and redirect the old id
+  URLs permanently
+* Separate the fallout rows by day, following the timezone the date column is
+  showing
+
 Version 1.11.0
 --------------
 
