@@ -8,7 +8,7 @@
 
 <div class="table-wrap">
   <table class="detail">
-    <tr><th scope="row">Port</th><td><a href="{% url 'ports:detail' fallout.port.id %}">{{ fallout.port }}</a></td></tr>
+    <tr><th scope="row">Port</th><td><a href="{{ fallout.port.get_absolute_url }}">{{ fallout.port }}</a></td></tr>
     <tr><th scope="row">Version</th><td>{{ fallout.version }}</td></tr>
     <tr><th scope="row">Maintainer</th><td>{{ fallout.port.maintainer }}</td></tr>
     <tr><th scope="row">Last committer</th><td>{{ fallout.last_committer }}</td></tr>
@@ -22,7 +22,7 @@
   </table>
 </div>
 
-<p class="muted small">See the <a href="{% url 'ports:detail' fallout.port.id %}">port detail</a>
+<p class="muted small">See the <a href="{{ fallout.port.get_absolute_url }}">port detail</a>
   page for the fallout history of this port.</p>
 
 {% endblock %}

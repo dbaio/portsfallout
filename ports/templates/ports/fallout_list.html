@@ -93,7 +93,7 @@
             <span class="sep">·</span>
             {% if fallout.report_url %}<a href="{{ fallout.report_url }}">report</a>{% else %}<span><s>report</s></span>{% endif %}
             <span class="sep">·</span>
-            <a href="{% url 'ports:detail' fallout.port.id %}">port</a>
+            <a href="{{ fallout.port.get_absolute_url }}">port</a>
           </span>
         </td>
       </tr>

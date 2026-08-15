@@ -246,7 +246,7 @@ class MobileLabelTests(TestCase):
         for url in [reverse('ports:fallout'), reverse('ports:list'),
                     reverse('ports:server'), reverse('ports:build_env'),
                     reverse('ports:maintainer'),
-                    reverse('ports:detail', args=[self.port.id])]:
+                    reverse('ports:detail', args=[self.port.origin])]:
             with self.subTest(url=url):
                 html = self.client.get(url).content.decode()
                 self.assertEqual(self.unlabelled_cells(html), [])
@@ -256,6 +256,35 @@ class MobileLabelTests(TestCase):
         html = self.client.get(reverse('ports:index')).content.decode()
         self.assertNotIn('table-wrap', html)
         self.assertNotIn('data-label', html)
+
+
+@no_cache
+class PortDetailUrlTests(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.port = Port.objects.create(
+            origin='www/apache24', name='apache24', main_category='www',
+            maintainer='dbaio@FreeBSD.org')
+
+    def test_the_url_carries_the_origin(self):
+        self.assertEqual(self.port.get_absolute_url(), '/port/www/apache24/')
+
+    def test_the_origin_serves_the_port(self):
+        response = self.client.get(self.port.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['port'], self.port)
+
+    def test_an_unknown_origin_is_a_404(self):
+        self.assertEqual(self.client.get('/port/www/nope/').status_code, 404)
+
+    def test_the_id_still_reaches_the_port(self):
+        response = self.client.get(reverse('ports:detail_by_id', args=[self.port.id]))
+        self.assertRedirects(response, self.port.get_absolute_url(), status_code=301)
+
+    def test_an_unknown_id_is_a_404(self):
+        url = reverse('ports:detail_by_id', args=[self.port.id + 1])
+        self.assertEqual(self.client.get(url).status_code, 404)
 
 
 @no_cache

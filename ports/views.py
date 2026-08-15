@@ -25,7 +25,7 @@ import logging
 from datetime import timedelta
 
 from django.http import Http404
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import View, TemplateView, ListView, DetailView
 from django.db import OperationalError
 from django.db.models import Count, Q
@@ -297,13 +297,26 @@ class PortListView(RegexFilterMixin, ListView):
 class PortDetailView(DetailView):
     model = Port
     template_name = 'ports/port_detail.html'
+    # The origin reads better in a URL than the id, and it is unique already.
+    slug_field = 'origin'
+    slug_url_kwarg = 'origin'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['navbar_list'] = 'active'
-        port_pk = self.kwargs.get('pk', None)
-        context['fallout_list'] = Fallout.objects.filter(port=port_pk).order_by('-date')[:50]
+        context['fallout_list'] = Fallout.objects.filter(
+            port=self.object).order_by('-date')[:50]
         return context
+
+
+def port_detail_by_id(request, pk):
+    """Send the old id based detail URL to the origin based one
+
+    Those URLs are public, so they are kept working instead of turning into a
+    404 for every bookmark and search result out there.
+    """
+
+    return redirect(get_object_or_404(Port, pk=pk), permanent=True)
 
 
 class ServerListView(ListView):

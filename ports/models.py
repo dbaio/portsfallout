@@ -22,6 +22,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
+from django.urls import reverse
 
 class Category(models.Model):
     name = models.CharField(max_length=64, unique=True)
@@ -47,6 +48,10 @@ class Port(models.Model):
 
     def __str__(self):
         return self.origin
+
+    def get_absolute_url(self):
+        # The origin is unique, so it is the natural key for the URL.
+        return reverse('ports:detail', args=[self.origin])
 
 
 class Fallout(models.Model):

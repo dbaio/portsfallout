@@ -42,7 +42,9 @@ urlpatterns = [
     path('fallout', views.FalloutListView.as_view(), name='fallout'),
     path('fallout/<int:pk>/', views.FalloutDetailView.as_view(), name='fdetail'),
     path('port', views.PortListView.as_view(), name='list'),
-    path('port/<int:pk>/', views.PortDetailView.as_view(), name='detail'),
+    # The id route comes first, otherwise `path` would swallow it as an origin.
+    path('port/<int:pk>/', views.port_detail_by_id, name='detail_by_id'),
+    path('port/<path:origin>/', views.PortDetailView.as_view(), name='detail'),
     path('server', views.ServerListView.as_view(), name='server'),
     path('about', views.about, name='about'),
     path('api/', include(router.urls)),
