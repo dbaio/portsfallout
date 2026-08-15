@@ -374,6 +374,19 @@ table.data .dim { color: var(--muted); }
 table.data .repeat { color: transparent; }
 table.data tbody tr:hover .repeat { color: var(--rule-firm); }
 
+/* The rule between two days, and the strongest line in the table: the day is
+   the strongest grouping a date sorted list has. Being the strongest is a
+   matter of weight, not of colour, so it doubles the row rule and stays in the
+   rule palette instead of reaching for the darker text colour, which reads as
+   a divider between tables rather than inside one. The gap above it matters as
+   much as the line, since what makes a day countable at a glance is the band
+   standing apart, not the stroke. The class is applied by the timezone script,
+   so the bands follow the date column into local time. */
+table.data tbody tr.day-edge td {
+  border-top: 2px solid var(--rule-firm);
+  padding-top: 13px;
+}
+
 .row-actions { display: flex; align-items: center; gap: 7px; }
 .row-actions a { color: var(--muted); text-decoration: none; font-size: 0.76rem; }
 .row-actions a:hover { color: var(--accent); text-decoration: underline; }
@@ -726,6 +739,14 @@ footer.site {
     margin-bottom: 3px;
   }
   .table-wrap table.data td:first-child::before { content: none; }
+  /* The row is a block here, so the day rule belongs to the block and not to
+     each cell inside it, which would draw one line per line of the block. */
+  .table-wrap table.data tbody tr.day-edge {
+    border-top: 2px solid var(--rule-firm);
+    padding-top: 18px;
+  }
+  .table-wrap table.data tbody tr.day-edge td { border-top: 0; padding-top: 1px; }
+
   /* Each block stands alone here, so a value repeated from the row above is
      information rather than noise. Bringing the text back has to bring its
      rail and its dimmed branch back with it. */

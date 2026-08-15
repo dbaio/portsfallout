@@ -57,6 +57,26 @@ document.addEventListener("DOMContentLoaded", function () {
         return null;
     }
 
+    /* The lists are date descending, so a day is a band of rows. Marking the
+       first row of each band lets the stylesheet rule it off, which turns "how
+       much fallout did this day carry" into the height of a band. The day comes
+       from the text just written into the cell, so the bands follow whichever
+       timezone the column is showing. */
+    function markDayBoundaries() {
+        document.querySelectorAll("table.data tbody").forEach(function (body) {
+            let previousDay = null;
+
+            body.querySelectorAll("tr").forEach(function (row) {
+                let element = row.querySelector(".utc-time");
+                if (!element) return;
+
+                let day = element.textContent.slice(0, 10);
+                row.classList.toggle("day-edge", previousDay !== null && day !== previousDay);
+                previousDay = day;
+            });
+        });
+    }
+
     function updateTimes() {
         document.querySelectorAll(".utc-time").forEach(function (element) {
             let utcDateString = element.getAttribute("data-utc");
@@ -83,6 +103,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (toggleButton) {
             toggleButton.textContent = isLocalTime ? "Switch to UTC" : "Switch to Local Time";
         }
+
+        markDayBoundaries();
     }
 
     let timezonePreference = getCookie("timezonePreference");
