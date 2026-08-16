@@ -32,6 +32,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'portsfallout.settings')
 import django
 django.setup()
 from ports.models import Port, Fallout
+from ports.utils import LOG_HEADER_FIELDS
 
 
 def process_mail(raw_email):
@@ -120,6 +121,9 @@ def read_scrapy_json():
 
             i_date = parser.parse(row['date'])
 
+            i_log_details = {field: row.get(field, '')
+                             for field, _ in LOG_HEADER_FIELDS.values()}
+
             if port:
                 fallout, created = Fallout.objects.get_or_create(port=port,
                                                         env=i_env,
@@ -132,7 +136,8 @@ def read_scrapy_json():
                                                         build_url=row['build_url'].replace('&amp;','&'),
                                                         defaults={'flavor': row['flavor'],
                                                                   'report_url': row['report_url'],
-                                                                  'server': i_server}
+                                                                  'server': i_server,
+                                                                  **i_log_details}
                                                         ,)
 
                 if not created:
@@ -148,6 +153,14 @@ def read_scrapy_json():
                     if fallout.report_url != row['report_url']:
                         fallout.report_url = row['report_url']
                         changed_fields += 1
+
+                    # A json crawled before the log header was read carries none
+                    # of these, so a blank means "not read" rather than "empty"
+                    # and must not wipe what an earlier run stored.
+                    for field, value in i_log_details.items():
+                        if value and getattr(fallout, field) != value:
+                            setattr(fallout, field, value)
+                            changed_fields += 1
 
                     if changed_fields > 0:
                         fallout.save()

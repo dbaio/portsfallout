@@ -30,6 +30,7 @@ from dateutil import parser
 from django.core.management.base import BaseCommand
 from django.utils import timezone as dtz
 from ports.models import Port, Fallout
+from ports.utils import LOG_HEADER_FIELDS, ParseLogHeader
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.project import get_project_settings
 from scripts.pkgfallout_orphans_scrapy_spider import PkgfalloutOrphansScrapySpider
@@ -172,10 +173,12 @@ class Command(BaseCommand):
 
         extracted_data["error_phase"] = self.find_failing_phase(log_data)
 
-        package_match = re.search(r"package name: (.+)", log_text)
-        if package_match:
-            package_name = package_match.group(1).strip()
-            extracted_data["version"] = package_name.split("-")[-1]
+        # The poudriere header carries the package name and the rest of the
+        # build's provenance in one block.
+        extracted_data.update(ParseLogHeader(log_text))
+
+        if extracted_data["package_name"]:
+            extracted_data["version"] = extracted_data["package_name"].split("-")[-1]
 
         env_match = re.search(r"MASTERNAME=(.+)", log_text)
         if env_match:
@@ -257,6 +260,8 @@ class Command(BaseCommand):
         i_report_url = extracted_data["report_url"] or ""
         i_flavor = extracted_data["flavor"] or ""
         i_port_name = extracted_data["port_name"] or ""
+        i_log_details = {field: extracted_data.get(field) or ""
+                         for field, _ in LOG_HEADER_FIELDS.values()}
 
         try:
             if i_log_url.split('/')[2] == "pkg-status.freebsd.org":
@@ -284,7 +289,8 @@ class Command(BaseCommand):
                 build_url=i_build_url,
                 report_url=i_report_url,
                 defaults={'flavor': i_flavor,
-                          'server': i_server}
+                          'server': i_server,
+                          **i_log_details}
             )
 
             if not created:
@@ -296,6 +302,13 @@ class Command(BaseCommand):
                 if fallout.server != i_server:
                     fallout.server = i_server
                     changed_fields += 1
+
+                # A log missing the header block says nothing about these, so a
+                # blank must not wipe what an earlier run stored.
+                for field, value in i_log_details.items():
+                    if value and getattr(fallout, field) != value:
+                        setattr(fallout, field, value)
+                        changed_fields += 1
 
                 if changed_fields > 0:
                     fallout.save()

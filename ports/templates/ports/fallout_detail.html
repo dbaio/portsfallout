@@ -1,6 +1,7 @@
 {% extends "ports/base.html" %}
 {% load build_env %}
 {% load phase %}
+{% load proxy %}
 {% block title %}Fallout detail - {{ fallout.port }}{% endblock %}
 {% block body_block %}
 
@@ -9,16 +10,53 @@
 <div class="table-wrap">
   <table class="detail">
     <tr><th scope="row">Port</th><td><a href="{{ fallout.port.get_absolute_url }}">{{ fallout.port }}</a></td></tr>
+    <tr><th scope="row">Package</th><td>{{ fallout.package_name|default:"—" }}</td></tr>
     <tr><th scope="row">Version</th><td>{{ fallout.version }}</td></tr>
-    <tr><th scope="row">Maintainer</th><td>{{ fallout.port.maintainer }}</td></tr>
-    <tr><th scope="row">Last committer</th><td>{{ fallout.last_committer }}</td></tr>
-    <tr><th scope="row">Build environment</th><td>{% with parts=fallout.env|env_split %}{{ parts.head }}<span class="env-branch">{{ parts.branch }}</span>{% endwith %}</td></tr>
-    <tr><th scope="row">Category</th><td>{% if fallout.category %}<span class="phase phase-{{ fallout.category|phase_family }}">{{ fallout.category }}</span>{% else %}—{% endif %}</td></tr>
     <tr><th scope="row">Flavor</th><td>{{ fallout.flavor|default:"—" }}</td></tr>
+    <tr><th scope="row">Maintainer</th><td>{{ fallout.port.maintainer }}</td></tr>
+    <tr><th scope="row">Last committer</th><td>{{ fallout.last_committer|default:"—" }}</td></tr>
+    <tr><th scope="row">Category</th><td>{% if fallout.category %}<span class="phase phase-{{ fallout.category|phase_family }}">{{ fallout.category }}</span>{% else %}—{% endif %}</td></tr>
     <tr><th scope="row">Report date</th><td>{{ fallout.date }}</td></tr>
-    <tr><th scope="row">Log URL</th><td><a href="{{ fallout.log_url }}" target="_blank" rel="noopener">{{ fallout.log_url }}</a></td></tr>
-    <tr><th scope="row">Build URL</th><td><a href="{{ fallout.build_url }}">{{ fallout.build_url }}</a></td></tr>
-    <tr><th scope="row">Report URL</th><td><a href="{{ fallout.report_url }}">{{ fallout.report_url }}</a></td></tr>
+  </table>
+</div>
+
+<h2>Build</h2>
+
+<div class="table-wrap">
+  <table class="detail">
+    <tr><th scope="row">Build environment</th><td>{% with parts=fallout.env|env_split %}{{ parts.head }}<span class="env-branch">{{ parts.branch }}</span>{% endwith %}</td></tr>
+    <tr><th scope="row">Server</th><td>{% if fallout.server %}<a href="https://pkg-status.freebsd.org/{{ fallout.server|get_short_name }}/">{{ fallout.server }}</a>{% else %}—{% endif %}</td></tr>
+    {% comment %}
+      The OSVERSION is the number a porter works with: it is what the port
+      tests against, and the handbook table says what each one changed. The
+      release it belongs to is only there to place it.
+    {% endcomment %}
+    {% with versions="https://docs.freebsd.org/en/books/porters-handbook/versions/" %}
+    <tr><th scope="row">Jail OSVERSION</th><td>{% if fallout.jail_osversion %}<a href="{{ versions }}" title="__FreeBSD_version values, in the porter's handbook">{{ fallout.jail_osversion }}</a> <span class="muted">(FreeBSD {{ fallout.jail_osversion|osversion }})</span>{% else %}—{% endif %}</td></tr>
+    <tr><th scope="row">Host OSVERSION</th><td>{% if fallout.host_osversion %}<a href="{{ versions }}" title="__FreeBSD_version values, in the porter's handbook">{{ fallout.host_osversion }}</a> <span class="muted">(FreeBSD {{ fallout.host_osversion|osversion }})</span>{% else %}—{% endif %}</td></tr>
+    {% endwith %}
+    <tr><th scope="row">Poudriere</th><td>{{ fallout.poudriere_version|default:"—" }}</td></tr>
+  </table>
+</div>
+
+{% if fallout.ports_top_commit or fallout.port_dir_commit %}
+<h2>Ports tree</h2>
+
+<div class="table-wrap">
+  <table class="detail">
+    {% include 'ports/commit_row.html' with label="Tree at build time" commit=fallout.ports_top_commit %}
+    {% include 'ports/commit_row.html' with label="Last change to the port" commit=fallout.port_dir_commit %}
+  </table>
+</div>
+{% endif %}
+
+<h2>Links</h2>
+
+<div class="table-wrap">
+  <table class="detail">
+    <tr><th scope="row">Log</th><td><a href="{{ fallout.log_url }}" target="_blank" rel="noopener">{{ fallout.log_url }}</a></td></tr>
+    <tr><th scope="row">Build queue</th><td><a href="{{ fallout.build_url }}">{{ fallout.build_url }}</a></td></tr>
+    <tr><th scope="row">Report</th><td>{% if fallout.report_url %}<a href="{{ fallout.report_url }}">{{ fallout.report_url }}</a>{% else %}—{% endif %}</td></tr>
   </table>
 </div>
 

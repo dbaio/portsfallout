@@ -50,3 +50,21 @@ def env_split(env):
                 'quarterly': last.lower() == 'quarterly'}
 
     return {'head': name, 'branch': '', 'quarterly': False}
+
+
+@register.filter(is_safe=True)
+def osversion(version):
+    """Turn a ``__FreeBSD_version`` into the release it stands for
+
+    The build log reports the host and the jail as ``1404000`` and ``1600019``,
+    which is ``MMmmmPPP``: major, minor, and a patch level that says nothing a
+    reader of this page is after. Anything that is not one of those numbers
+    comes back untouched, so a value we cannot read still renders.
+    """
+    digits = str(version or '').strip()
+    if not digits.isdigit():
+        return digits
+
+    number = int(digits)
+
+    return f'{number // 100000}.{number % 100000 // 1000}'

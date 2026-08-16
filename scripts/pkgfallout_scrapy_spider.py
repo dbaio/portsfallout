@@ -40,8 +40,16 @@ Execution:
 
 import scrapy
 import re
+import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 from scrapy.utils.httpobj import urlparse_cached
+
+# Run by `scrapy runspider` rather than as part of the project, so the package
+# the parser lives in has to be put on the path first. Resolved from this file
+# so it does not depend on where the spider was started from.
+sys.path.insert(1, str(Path(__file__).resolve().parent.parent))
+from ports.utils import ParseLogHeader
 
 # https://github.com/scrapy/scrapy/blob/master/scrapy/extensions/httpcache.py#L23
 class CustomPolicyPkgFallout(object):
@@ -102,6 +110,11 @@ class PkgfalloutScrapySpider(scrapy.Spider):
         if (response.xpath("//meta[@name='Author']/@content")[0].re(r'pkg-fallout') and
                 response.xpath("//meta[@name='Subject']/@content")[0].re(r'^\[package')):
 
+            # The mail quotes the build log in full, header block included, so
+            # the details below come for free instead of costing one request to
+            # the package builder per fallout. `::text` is what unescapes it.
+            body = ''.join(response.css('pre.main ::text').getall())
+
             yield {
                 'description': response.css('title::text').get(),
                 'date': response.css('body article').re_first(r'Date:\s*(.*)').replace('</i></strong> ', '').replace(' <br>', ''),
@@ -111,4 +124,5 @@ class PkgfalloutScrapySpider(scrapy.Spider):
                 'build_url': response.css('body article').re_first(r'Build URL:\s*(.*)').replace('&amp;', '&'),
                 'flavor': response.css('body article').re_first(r'FLAVOR=.*').split('=')[-1].replace('<br>',''),
                 'report_url': response.url,
+                **ParseLogHeader(body),
             }

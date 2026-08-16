@@ -1,0 +1,23 @@
+{% load commit %}
+{% comment %}
+  One ports tree commit: the hash it is known by, and the mirrors that can
+  show it. Takes `label` and `commit`.
+{% endcomment %}
+<tr>
+  <th scope="row">{{ label }}</th>
+  <td>
+    {% if commit %}
+      <span title="{{ commit }}">{{ commit|slice:":12" }}</span>
+      {% with mirrors=commit|commit_mirrors %}
+        {% if mirrors %}
+          <span class="row-actions">
+            {% for mirror in mirrors %}
+              {% if not forloop.first %}<span class="sep">·</span>{% endif %}
+              <a{% if forloop.first %} class="primary"{% endif %} href="{{ mirror.url }}" rel="noopener">{{ mirror.name }}</a>
+            {% endfor %}
+          </span>
+        {% endif %}
+      {% endwith %}
+    {% else %}—{% endif %}
+  </td>
+</tr>

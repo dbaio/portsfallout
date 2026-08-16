@@ -121,6 +121,16 @@ You can also fetch older fallouts:
 More info in ``scripts/pkgfallout_scrapy_spider.py``.
 
 
+The fallouts imported before the crawler started reading the poudriere header
+of the build log have no package name, tree commits, poudriere version or
+OSVERSIONs. One report is fetched from the archive per fallout, so the run is
+bounded and can be repeated until it is done:
+
+::
+
+   $ python manage.py fill_log_details 30 --limit 500 -v 2
+
+
 
 Cron jobs
 ---------

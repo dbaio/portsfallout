@@ -68,6 +68,16 @@ class Fallout(models.Model):
     server = models.CharField(max_length=48, blank=True)
     flavor = models.CharField(max_length=24, blank=True)
 
+    # Read from the poudriere header at the top of the build log, see
+    # `ports.utils.LOG_HEADER_FIELDS`. Blank on the fallouts imported before
+    # the crawler started keeping them, and on any log missing the block.
+    package_name = models.CharField(max_length=128, blank=True)
+    ports_top_commit = models.CharField(max_length=40, blank=True)
+    port_dir_commit = models.CharField(max_length=40, blank=True)
+    poudriere_version = models.CharField(max_length=48, blank=True)
+    host_osversion = models.CharField(max_length=16, blank=True)
+    jail_osversion = models.CharField(max_length=16, blank=True)
+
     def __str__(self):
         # head-arm64-default | net/findomain
         return self.env + " | " + self.port.origin

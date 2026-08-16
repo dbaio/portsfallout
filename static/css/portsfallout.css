@@ -670,6 +670,9 @@ table.detail th, table.detail td {
 table.detail th { width: 190px; color: var(--muted); font-weight: 600; font-size: 0.82rem; }
 table.detail td { font-family: var(--mono); font-size: 0.84rem; word-break: break-all; }
 table.detail tr:last-child th, table.detail tr:last-child td { border-bottom: 0; }
+/* Five mirrors of one commit do not fit a phone on one line, and the row here
+   is a value rather than a list of actions, so it may wrap. */
+table.detail .row-actions { flex-wrap: wrap; margin-top: 3px; }
 
 /* ---------- footer ---------- */
 
