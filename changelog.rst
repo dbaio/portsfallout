@@ -1,6 +1,16 @@
 Changelog
 =========
 
+Version 1.13.0
+--------------
+
+* Keep the poudriere log header of each fallout: the package name, the two
+  ports tree commits, the poudriere version and both OSVERSIONs
+* Regroup the fallout detail page, linking the commits to five ports tree
+  mirrors and the OSVERSIONs to the porter's handbook
+* Add the ``fill_log_details`` command, which reads the header of the fallouts
+  imported before it
+
 Version 1.12.0
 --------------
 
