@@ -21,7 +21,33 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# The one place the release is written down. The about page shows it and every
-# stylesheet and script is served with it as its cache busting query, so a
-# release is this line plus a changelog entry.
-__version__ = '1.13.0'
+from django import template
+from django.templatetags.static import static
+
+from portsfallout import __version__
+
+register = template.Library()
+
+
+@register.simple_tag
+def version():
+    """The release this site is running"""
+    return __version__
+
+
+@register.simple_tag
+def versioned_static(path):
+    """Build the URL of a static file with the release as its cache buster
+
+    A browser holding last release's stylesheet has no reason to ask for it
+    again, so the query string is what tells it the file changed. Reading the
+    release from one constant is the point: the version used to be typed into
+    every template that pulls in an asset, and a bump that missed one of them
+    left that page serving a stale file to everyone who had already visited.
+
+    Arguments:
+        path [string] -- a path below the static root, as `{% static %}` takes
+    Returns:
+        [string] -- the static URL with `?v=` and the release appended
+    """
+    return f'{static(path)}?v={__version__}'

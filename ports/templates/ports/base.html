@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
+{% load version %}
 <html lang="en">
    <head>
       <meta charset="utf-8">
@@ -7,7 +8,7 @@
       <title>
         {% block title %}{% endblock %} - FreeBSD pkg-fallout
       </title>
-      <link rel="stylesheet" href="{% static 'css/portsfallout.css' %}?v=1.13.0">
+      <link rel="stylesheet" href="{% versioned_static 'css/portsfallout.css' %}">
 
       <script>
         // Stamp the stored theme before the first paint, otherwise the page
@@ -62,7 +63,7 @@
       <div class="container">PortsFallout (2020-2026)</div>
     </footer>
 
-    <script src="{% static 'js/theme_toggle.js' %}?v=1.13.0"></script>
+    <script src="{% versioned_static 'js/theme_toggle.js' %}"></script>
     <script>
       // Close the navbar dropdown when the click lands outside of it.
       document.addEventListener('click', function (event) {

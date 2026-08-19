@@ -1,5 +1,5 @@
 {% extends "ports/base.html" %}
-{% load static %}
+{% load version %}
 {% block title %}Fallout list{% endblock %}
 {% load humanize %}
 {% load build_env %}
@@ -107,5 +107,5 @@
   <p class="muted">No pkg-fallout matches this filter.</p>
 {% endif %}
 
-<script src="{% static 'js/datetime_toggle.js' %}?v=1.12.0"></script>
+<script src="{% versioned_static 'js/datetime_toggle.js' %}"></script>
 {% endblock %}
