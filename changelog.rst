@@ -1,6 +1,19 @@
 Changelog
 =========
 
+Version 1.13.1
+--------------
+
+* Stop ``find_orphan_fallouts`` hanging after the first build directory: Scrapy
+  would not crawl under the reactor twisted had already installed, and the
+  refusal left the reactor running with nothing scheduled
+* Read only the two ends of a build log instead of the whole of it, which for a
+  174 MB log is 41 MB of memory in place of 389 MB
+* Read the failing phase of a build that died in a dependency phase, which was
+  being recorded as the phase above it
+* Keep the release in one place, ``portsfallout.__version__``, so a stylesheet
+  or a script can no longer be left with a stale cache busting query
+
 Version 1.13.0
 --------------
 
