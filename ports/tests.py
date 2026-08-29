@@ -23,6 +23,7 @@
 
 import re
 from datetime import timedelta
+from io import StringIO
 from pathlib import Path
 from unittest import mock
 
@@ -34,10 +35,12 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone as dtz
 
+from ports.management.commands.find_orphan_fallouts import (
+    LOG_HEAD_BYTES, LOG_TAIL_BYTES, Command as FindOrphanFallouts)
 from ports.models import Category, Fallout, Port
 from ports.templatetags.build_env import env_split, osversion
 from ports.templatetags.commit import COMMIT_MIRRORS, commit_mirrors
-from ports.templatetags.phase import phase_family
+from ports.templatetags.phase import PHASE_FAMILIES, phase_family
 from ports.templatetags.proxy import get_proxy, get_short_name
 from ports.utils import (LOG_HEADER_FIELDS, MAX_REGEX_LENGTH,
                          InvalidRegexError, IsRegex, ParseLogHeader,
@@ -678,3 +681,103 @@ class FillLogDetailsTests(TestCase):
 
         fallout.refresh_from_db()
         self.assertEqual(fallout.package_name, LOG_HEADER_VALUES['package_name'])
+
+
+class OrphanLogReadTests(TestCase):
+    """Reading a build log without pulling the whole of it into memory"""
+
+    LOG_URL = ('https://pkg-status.freebsd.org/beefy19/data/144i386-quarterly/'
+               '17af07f5de95/logs/py312-hieroglyph-2.1.0_1.log')
+
+    ENDING = ('build of textproc/py-hieroglyph | py312-hieroglyph-2.1.0_1 '
+              'ended at Tue Aug  4 21:05:11 UTC 2026')
+
+    # Bigger than the head, so the two ends of the result cannot overlap.
+    HUGE = 4 * 1024 * 1024
+
+    def make_log(self, filler=0):
+        return (LOG_HEADER
+                + 'MASTERNAME=144i386-quarterly\n'
+                + '=======================<phase: build-depends  >====================\n'
+                + '=======================<phase: lib-depends    >====================\n'
+                + 'x' * filler + '\n'
+                + '*** Error code 1\n'
+                + self.ENDING + '\n')
+
+    def command(self):
+        return FindOrphanFallouts(stdout=StringIO())
+
+    def fetch(self, body):
+        """Read a log served a chunk at a time, as a streamed response is"""
+
+        raw = body.encode()
+        response = mock.MagicMock()
+        response.__enter__.return_value = response
+        response.raise_for_status.return_value = None
+        response.iter_content.side_effect = lambda chunk_size: (
+            raw[at:at + chunk_size] for at in range(0, len(raw), chunk_size))
+
+        with mock.patch('ports.management.commands.find_orphan_fallouts.requests.get',
+                        mock.Mock(return_value=response)):
+            return self.command().fetch_log_content(self.LOG_URL)
+
+    def test_a_huge_log_costs_only_its_two_ends(self):
+        head, tail = self.fetch(self.make_log(filler=self.HUGE))
+
+        self.assertEqual(len(head), LOG_HEAD_BYTES)
+        self.assertEqual(len(tail), LOG_TAIL_BYTES)
+
+    def test_a_log_short_enough_to_be_read_whole_has_no_tail(self):
+        head, tail = self.fetch(self.make_log())
+
+        self.assertEqual(tail, '')
+        self.assertIn(self.ENDING, head)
+
+    def test_a_log_that_cannot_be_read_is_skipped(self):
+        get = mock.Mock(side_effect=requests.RequestException('boom'))
+
+        with mock.patch('ports.management.commands.find_orphan_fallouts.requests.get', get):
+            self.assertIsNone(self.command().fetch_log_content(self.LOG_URL))
+
+    def test_the_end_time_is_read_out_of_the_tail(self):
+        head, tail = self.fetch(self.make_log(filler=self.HUGE))
+        details = self.command().extract_log_details(head, tail, self.LOG_URL)
+
+        self.assertEqual(details['date'], 'Tue Aug  4 21:05:11 UTC 2026')
+
+    def test_the_end_time_is_still_read_when_there_is_no_tail(self):
+        head, tail = self.fetch(self.make_log())
+        details = self.command().extract_log_details(head, tail, self.LOG_URL)
+
+        self.assertEqual(details['date'], 'Tue Aug  4 21:05:11 UTC 2026')
+
+    def test_everything_else_is_read_out_of_the_head(self):
+        head, tail = self.fetch(self.make_log(filler=self.HUGE))
+        details = self.command().extract_log_details(head, tail, self.LOG_URL)
+
+        self.assertEqual(details['port_name'], 'textproc/py-hieroglyph')
+        self.assertEqual(details['maintainer'], 'dbaio@FreeBSD.org')
+        self.assertEqual(details['env'], '144i386-quarterly')
+        self.assertEqual(details['version'], '2.1.0_1')
+        for field, value in LOG_HEADER_VALUES.items():
+            with self.subTest(field=field):
+                self.assertEqual(details[field], value)
+
+    def test_the_failing_phase_is_the_last_marker(self):
+        self.assertEqual(self.command().find_failing_phase(self.make_log()),
+                         'lib-depends')
+
+    def test_a_phase_named_in_one_word_is_read_too(self):
+        log = '=======================<phase: configure      >===================\n'
+        self.assertEqual(self.command().find_failing_phase(log), 'configure')
+
+    def test_every_phase_the_stylesheet_knows_is_recognised(self):
+        """The dependency phases carry a hyphen, which `\\w+` used to stop at"""
+
+        for phase in PHASE_FAMILIES:
+            with self.subTest(phase=phase):
+                log = f'=======================<phase: {phase:<14}>====================\n'
+                self.assertEqual(self.command().find_failing_phase(log), phase)
+
+    def test_a_log_with_no_marker_has_no_phase(self):
+        self.assertIsNone(self.command().find_failing_phase(LOG_HEADER))

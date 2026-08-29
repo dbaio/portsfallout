@@ -27,14 +27,35 @@ from datetime import timedelta
 
 import requests
 from dateutil import parser
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone as dtz
 from ports.models import Port, Fallout
 from ports.utils import LOG_HEADER_FIELDS, ParseLogHeader
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.project import get_project_settings
+from scrapy.utils.reactor import install_reactor
 from scripts.pkgfallout_orphans_scrapy_spider import PkgfalloutOrphansScrapySpider
-from twisted.internet import defer, reactor
+
+# Scrapy refuses to crawl under a reactor other than the one it asks for, and
+# importing `twisted.internet.reactor` installs the default one, so this comes
+# first.
+_scrapy_settings = get_project_settings()
+if _scrapy_settings['TWISTED_REACTOR']:
+    install_reactor(_scrapy_settings['TWISTED_REACTOR'],
+                    _scrapy_settings['ASYNCIO_EVENT_LOOP'])
+
+from twisted.internet import defer, reactor  # noqa: E402
+
+USER_AGENT = 'portsfallout (+https://portsfallout.com)'
+
+TIMEOUT = 30
+
+# Only the two ends of a log are kept: the header, the environment dump and
+# every phase marker are in the first kilobytes, the end time is the last line,
+# and the compiler output in between reaches 174 MB.
+LOG_HEAD_BYTES = 128 * 1024
+LOG_TAIL_BYTES = 8 * 1024
+LOG_CHUNK_BYTES = 64 * 1024
 
 class Command(BaseCommand):
     help = "Find orphan fallouts from the FreeBSD pkg-fallout archive"
@@ -58,21 +79,48 @@ class Command(BaseCommand):
             if base_url not in unique_urls:
                 unique_urls.add(base_url)
 
+        for log_url in self.scrape_log_urls(unique_urls):
+            self.process_log_url(log_url)
+
+    def scrape_log_urls(self, base_urls):
+        """List the logs in the errors directory of every build
+
+        All the crawling is done before a single result is read: the ORM
+        refuses to be called from the reactor's async context.
+
+        Arguments:
+            base_urls [set] -- the build directories to look in
+        Returns:
+            [list] -- every log URL listed, across all of them
+        """
+
+        found = []
+        failures = []
+
+        # An error escaping the generator used to leave the reactor running
+        # with nothing scheduled, and the command hung.
         @defer.inlineCallbacks
-        def run_all_scrapers():
-            for url in unique_urls:
-                errors_url = url + "/errors/"
-                if self.verbosity > 0:
-                    self.stdout.write(f"Scraping: {errors_url}")
+        def scrape_all():
+            try:
+                for url in base_urls:
+                    errors_url = url + "/errors/"
+                    if self.verbosity > 0:
+                        self.stdout.write(f"Scraping: {errors_url}")
 
-                log_urls = yield self.run_scraper(errors_url)
-                for log_url in log_urls:
-                    self.process_log_url(log_url)
+                    log_urls = yield self.run_scraper(errors_url)
+                    found.extend(log_urls)
+            except Exception as error:
+                failures.append(error)
+            finally:
+                reactor.stop()
 
-            reactor.stop()
-
-        reactor.callWhenRunning(run_all_scrapers)
+        reactor.callWhenRunning(scrape_all)
         reactor.run()
+
+        if failures:
+            raise CommandError(failures[0])
+
+        return found
 
     def run_scraper(self, url):
         results = []
@@ -104,24 +152,44 @@ class Command(BaseCommand):
             if self.verbosity > 0:
                 self.stdout.write(f"  -> Log NO exists in database: {decoded_url}")
 
-        log_data = self.fetch_log_content(decoded_url)
+        log = self.fetch_log_content(decoded_url)
 
-        if not log_data:
+        if log is None:
             if self.verbosity > 0:
                 self.stdout.write(f"  -> Skipping log due to failure: {decoded_url}")
             return
 
-        extracted_details = self.extract_log_details(log_data, decoded_url)
+        head, tail = log
+        extracted_details = self.extract_log_details(head, tail, decoded_url)
         self.save_fallout_entry(extracted_details)
 
     def fetch_log_content(self, log_url):
+        """Read the head and the tail of a build log, never the whole of it
+
+        Arguments:
+            log_url [string] -- the build log to read
+        Returns:
+            [tuple] -- the head and the tail as text, or None if the log could
+                       not be read
+        """
+
+        head = bytearray()
+        tail = bytearray()
+
         try:
-            with requests.get(log_url, stream=True, timeout=10) as response:
+            with requests.get(log_url, headers={'User-Agent': USER_AGENT},
+                              stream=True, timeout=TIMEOUT) as response:
                 response.raise_for_status()
 
-                log_lines = [line for line in response.iter_lines(decode_unicode=True)]
+                for chunk in response.iter_content(chunk_size=LOG_CHUNK_BYTES):
+                    missing = LOG_HEAD_BYTES - len(head)
+                    if missing > 0:
+                        head += chunk[:missing]
+                        chunk = chunk[missing:]
 
-            return log_lines
+                    if chunk:
+                        tail += chunk
+                        del tail[:-LOG_TAIL_BYTES]
 
         except requests.Timeout:
             self.stdout.write(f"   Request timed out: {log_url}")
@@ -130,11 +198,17 @@ class Command(BaseCommand):
             self.stdout.write(f"   Error fetching log: {e}")
             return None
 
-    def extract_log_details(self, log_data, log_url):
+        # Either end can be cut in the middle of a character.
+        return head.decode("utf-8", "replace"), tail.decode("utf-8", "replace")
+
+    def extract_log_details(self, head, tail, log_url):
         """
-        Extracts relevant details from log_data using regex and prepares an object for database insertion.
+        Extracts relevant details from the two ends of a log using regex and prepares an object
+        for database insertion.
         """
-        log_text = "\n".join(log_data)
+        # A log short enough to have been read whole carries its end time in
+        # the head, having no tail of its own.
+        ending = tail or head
 
         extracted_data = {
             "date": None,
@@ -150,11 +224,11 @@ class Command(BaseCommand):
             "env": None,
         }
 
-        date_match = re.search(r"build of .*? \| .*? ended at (.+)", log_text)
+        date_match = re.search(r"build of .*? \| .*? ended at (.+)", ending)
         if date_match:
             extracted_data["date"] = date_match.group(1)
 
-        maintainer_match = re.search(r"maintained by: (.+)", log_text)
+        maintainer_match = re.search(r"maintained by: (.+)", head)
         if maintainer_match:
             extracted_data["maintainer"] = maintainer_match.group(1)
 
@@ -163,44 +237,50 @@ class Command(BaseCommand):
             server, mastername, build_id, _ = build_url_match.groups()
             extracted_data["build_url"] = f"https://pkg-status.freebsd.org/{server}/build.html?mastername={mastername}&build={build_id}"
 
-        flavor_match = re.search(r"FLAVOR=(.*)", log_text)
+        flavor_match = re.search(r"FLAVOR=(.*)", head)
         if flavor_match:
             extracted_data["flavor"] = flavor_match.group(1).strip() or None
 
-        port_name_match = re.search(r"=>> Building (.+)", log_text)
+        port_name_match = re.search(r"=>> Building (.+)", head)
         if port_name_match:
             extracted_data["port_name"] = port_name_match.group(1)
 
-        extracted_data["error_phase"] = self.find_failing_phase(log_data)
+        extracted_data["error_phase"] = self.find_failing_phase(head)
 
         # The poudriere header carries the package name and the rest of the
         # build's provenance in one block.
-        extracted_data.update(ParseLogHeader(log_text))
+        extracted_data.update(ParseLogHeader(head))
 
         if extracted_data["package_name"]:
             extracted_data["version"] = extracted_data["package_name"].split("-")[-1]
 
-        env_match = re.search(r"MASTERNAME=(.+)", log_text)
+        env_match = re.search(r"MASTERNAME=(.+)", head)
         if env_match:
             extracted_data["env"] = env_match.group(1).strip()
 
         return extracted_data
 
-    def find_failing_phase(self, log_data):
-        """
-        Reads the log from bottom to top and identifies the first 'phase' causing the failure.
-        Example patterns:
+    def find_failing_phase(self, head):
+        r"""Identify the phase the build died in
+
+        Poudriere writes a marker as it enters each phase, so the failing one
+        is the last marker written.
+
         =======================<phase: lib-depends    >============================
         =======================<phase: configure      >============================
+
+        The name is matched with a hyphen in it: `\w+` stops at one, and every
+        dependency phase was read as the phase above it.
+
+        Arguments:
+            head [string] -- the head of a build log
+        Returns:
+            [string] -- the phase name, or None if the log has no marker
         """
-        phase_pattern = re.compile(r"=======================<phase:\s*(\w+)\s*>============================")
 
-        for line in reversed(log_data):
-            match = phase_pattern.search(line)
-            if match:
-                return match.group(1)
+        phases = re.findall(r"=+<phase:\s*([\w-]+)\s*>=+", head)
 
-        return None
+        return phases[-1] if phases else None
 
     def save_fallout_entry(self, extracted_data):
         """
