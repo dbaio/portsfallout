@@ -1,6 +1,18 @@
 Changelog
 =========
 
+Version 1.14.0
+--------------
+
+* Filter the API by field, under the parameter names the web interface already
+  uses, so the fallouts of a maintainer no longer mean every row holding that
+  substring somewhere
+* Bound a fallout listing by date, so a client keeping a copy asks only for
+  what it is missing
+* Answer a refused regular expression with a 400 naming the parameter, whether
+  it is rejected up front or by the database once the query runs
+* Document the API in the README and on the about page
+
 Version 1.13.1
 --------------
 
