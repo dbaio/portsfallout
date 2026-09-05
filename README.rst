@@ -161,3 +161,129 @@ Tests
 
    $ python manage.py test ports
 
+
+
+API
+---
+
+A read-only REST API is served under ``/api/``, with no authentication:
+
+::
+
+   https://portsfallout.com/api/fallout/
+   https://portsfallout.com/api/port/
+   https://portsfallout.com/api/category/
+
+A browser gets the browsable interface of Django REST framework, whose Filters
+button carries the parameters below, and ``?format=json`` gets JSON. A single
+object is at ``/api/<endpoint>/<id>/``.
+
+Results are paginated with ``limit`` and ``offset``. The limit defaults to 50
+and is capped at 500, so a full listing means following ``next`` until it is
+null:
+
+::
+
+   $ curl -s 'https://portsfallout.com/api/fallout/?format=json&limit=2'
+
+   {
+     "count": 54231,
+     "next": "https://portsfallout.com/api/fallout/?format=json&limit=2&offset=2",
+     "previous": null,
+     "results": [ { "url": ..., "port": { ... }, "env": ..., "maintainer": ... } ]
+   }
+
+Each fallout carries the port it belongs to, already expanded, so listing the
+fallouts of a maintainer does not need a second request per row. The order is
+fixed: fallouts newest first, ports by origin, categories by name.
+
+
+Searching
+~~~~~~~~~
+
+Every endpoint takes a ``search`` parameter, matched case insensitively as a
+substring against:
+
+::
+
+   /api/fallout/    maintainer, port origin, env, category
+   /api/port/       origin, maintainer
+   /api/category/   name
+
+Several words are ANDed, and each one has to match one of the fields, not
+necessarily the same one. A value containing spaces can be quoted to keep it
+as a single term.
+
+``search`` answers "it is one of these fields, I do not know which", so it is
+the wrong tool once the field is known: ``search=ports`` also returns the
+fallouts of ``ports-mgmt/*`` and of maintainers such as
+``fbsd-ports@convectix.com``. Name the field instead.
+
+
+Filtering
+~~~~~~~~~
+
+Each endpoint takes one parameter per field, named and matched exactly as in
+the web interface, so the same value means the same thing in both places:
+
+::
+
+   /api/fallout/    maintainer    from the start of the address
+                    port          substring of the origin
+                    env           substring of the build environment
+                    category      the build phase, exactly
+                    flavor        substring of the flavor
+                    date_after    on or after this moment
+                    date_before   on or before this moment
+   /api/port/       maintainer, port
+   /api/category/   name          substring of the name
+
+They combine, and every one of them takes a regular expression in place of a
+plain value:
+
+::
+
+   $ curl -s 'https://portsfallout.com/api/fallout/?format=json&maintainer=ports'
+   $ curl -s 'https://portsfallout.com/api/fallout/?format=json&maintainer=^(ports|x11)@&env=head-amd64'
+
+A pattern that is too expensive to run, or that the database refuses, is a 400
+naming the parameter rather than an error page:
+
+::
+
+   {"maintainer": ["Regular expression has nested quantifiers, which are too expensive to run."]}
+
+
+Fallouts of a maintainer
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+``maintainer`` matches from the start of the address, which covers both ways
+of asking:
+
+::
+
+   Every address that begins with `ports`
+   $ curl -s 'https://portsfallout.com/api/fallout/?format=json&maintainer=ports'
+
+   That one address alone
+   $ curl -s 'https://portsfallout.com/api/fallout/?format=json&maintainer=ports@FreeBSD.org'
+
+The prefix does not reach ``fbsd-ports@convectix.com``, and filtering one
+field leaves the ``ports-mgmt/*`` origins out as well. The same question put
+to ``search`` returns all three.
+
+
+Keeping a copy up to date
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``date_after`` and ``date_before`` take a day or a full timestamp, and a value
+without an offset is read as UTC:
+
+::
+
+   $ curl -s 'https://portsfallout.com/api/fallout/?format=json&date_after=2026-09-01'
+   $ curl -s 'https://portsfallout.com/api/fallout/?format=json&date_after=2026-09-01T12:00:00Z'
+
+Fallouts come back newest first, so a client that already holds a copy asks
+for what is newer than the last date it saw and stops when ``next`` is null,
+instead of walking the whole archive again.

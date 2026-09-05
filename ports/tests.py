@@ -340,6 +340,133 @@ class ApiTests(TestCase):
         self.assertLessEqual(len(response.json()['results']), 500)
 
 
+@no_cache
+class ApiFilterTests(TestCase):
+    """The per field filters of the API
+
+    `ports` as a maintainer is the case the fixtures are built around: it is a
+    prefix of one address, the middle of another, and part of a third origin.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.now = dtz.now()
+        cls.ports = cls.fallout('devel/opencl-clang', 'ports@FreeBSD.org',
+                                env='144amd64-quarterly', flavor='llvm16', days=1)
+        cls.dbaio = cls.fallout('www/nginx', 'dbaio@FreeBSD.org',
+                                env='head-amd64-default', days=5)
+        # The origin, not the maintainer, is what holds `ports` here.
+        cls.pkg = cls.fallout('ports-mgmt/pkg', 'bapt@FreeBSD.org',
+                              env='head-amd64-default', days=9)
+        # And here the address merely contains it.
+        cls.convectix = cls.fallout('x11/foo', 'fbsd-ports@convectix.com',
+                                    env='head-i386-default', days=13)
+
+    @classmethod
+    def fallout(cls, origin, maintainer, env, flavor='', days=0):
+        port = Port.objects.create(origin=origin, name=origin.split('/')[1],
+                                   maintainer=maintainer,
+                                   main_category=origin.split('/')[0])
+        return Fallout.objects.create(
+            port=port, env=env, version='1.0', category='build', flavor=flavor,
+            maintainer=maintainer, last_committer='x@FreeBSD.org',
+            date=cls.now - timedelta(days=days),
+            log_url='https://pkg-status.freebsd.org/beefy18/x.log',
+            build_url='https://pkg-status.freebsd.org/beefy18/',
+            report_url='https://lists.freebsd.org/1.html')
+
+    def maintainers(self, params, endpoint='/api/fallout/'):
+        response = self.client.get(endpoint, params)
+        self.assertEqual(response.status_code, 200)
+        return sorted(row['maintainer'] for row in response.json()['results'])
+
+    def test_maintainer_matches_from_the_start_of_the_address(self):
+        self.assertEqual(self.maintainers({'maintainer': 'ports'}),
+                         ['ports@FreeBSD.org'])
+
+    def test_search_is_the_reason_that_filter_exists(self):
+        """`search` matches a substring of any searched field, `maintainer` does not"""
+
+        self.assertEqual(self.maintainers({'search': 'ports'}),
+                         ['bapt@FreeBSD.org', 'fbsd-ports@convectix.com',
+                          'ports@FreeBSD.org'])
+
+    def test_the_full_address_still_works(self):
+        self.assertEqual(self.maintainers({'maintainer': 'ports@FreeBSD.org'}),
+                         ['ports@FreeBSD.org'])
+
+    def test_maintainer_takes_a_regular_expression(self):
+        self.assertEqual(self.maintainers({'maintainer': '^(ports|dbaio)@'}),
+                         ['dbaio@FreeBSD.org', 'ports@FreeBSD.org'])
+
+    def test_filters_are_combined(self):
+        self.assertEqual(self.maintainers({'env': 'head-amd64', 'port': 'ports-mgmt'}),
+                         ['bapt@FreeBSD.org'])
+        self.assertEqual(self.maintainers({'maintainer': 'ports', 'env': 'head-amd64'}), [])
+
+    def test_flavor_and_the_build_phase(self):
+        self.assertEqual(self.maintainers({'flavor': 'llvm16'}), ['ports@FreeBSD.org'])
+        self.assertEqual(len(self.maintainers({'category': 'build'})), 4)
+        self.assertEqual(self.maintainers({'category': 'buil'}), [])
+
+    def test_an_empty_filter_is_ignored(self):
+        self.assertEqual(len(self.maintainers({'maintainer': '', 'env': ' '})), 4)
+
+    def test_the_port_endpoint_filters_the_same_way(self):
+        self.assertEqual(self.maintainers({'maintainer': 'ports'}, '/api/port/'),
+                         ['ports@FreeBSD.org'])
+        self.assertEqual(self.maintainers({'port': 'ports-mgmt'}, '/api/port/'),
+                         ['bapt@FreeBSD.org'])
+
+    def test_the_category_endpoint_filters_by_name(self):
+        Category.objects.create(name='devel')
+        Category.objects.create(name='www')
+        response = self.client.get('/api/category/', {'name': '^de'})
+        self.assertEqual([row['name'] for row in response.json()['results']], ['devel'])
+
+    def test_a_refused_regex_is_a_400(self):
+        response = self.client.get('/api/fallout/', {'maintainer': 'bogus((a+)+)b'})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('nested quantifiers', response.json()['maintainer'][0])
+
+    def test_a_filter_the_database_refuses_is_a_400(self):
+        """The engine has the last word, and it only speaks once the query runs"""
+
+        with mock.patch('django.db.models.query.QuerySet.count',
+                        side_effect=OperationalError('Illegal argument to a regular expression')):
+            response = self.client.get('/api/fallout/', {'env': 'head.*'})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('could not be evaluated', response.json()['detail'][0])
+
+    def test_a_date_range_bounds_both_ends(self):
+        recent = (self.now - timedelta(days=3)).date().isoformat()
+        self.assertEqual(self.maintainers({'date_after': recent}), ['ports@FreeBSD.org'])
+        self.assertEqual(len(self.maintainers({'date_before': recent})), 3)
+
+    def test_a_date_range_takes_a_timestamp_too(self):
+        moment = (self.now - timedelta(days=3)).isoformat()
+        self.assertEqual(self.maintainers({'date_after': moment}), ['ports@FreeBSD.org'])
+
+    def test_a_value_that_is_not_a_date_is_a_400(self):
+        for value in ['yesterday', '2026-02-31', '2026-13-01']:
+            with self.subTest(value=value):
+                response = self.client.get('/api/fallout/', {'date_after': value})
+                self.assertEqual(response.status_code, 400)
+                self.assertIn('Expected a date', response.json()['date_after'][0])
+
+    def test_the_browsable_api_offers_the_filters(self):
+        response = self.client.get('/api/fallout/', {'search': 'nginx'}, HTTP_ACCEPT='text/html')
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
+        for param in ['maintainer', 'env', 'flavor', 'date_after']:
+            with self.subTest(param=param):
+                self.assertIn(f'name="{param}"', body)
+
+        # Filtering from that form must not throw away the search in the URL.
+        self.assertIn('name="search" value="nginx"', body)
+
+
 class StaticFilesTests(TestCase):
 
     STATIC_TAG_RE = re.compile(r'{%\s*static\s+["\']([^"\']+)["\']')

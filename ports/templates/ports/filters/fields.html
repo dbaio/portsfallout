@@ -1,0 +1,13 @@
+{% load i18n %}
+<h2>{% trans "Filters" %}</h2>
+<form>
+  {% if search %}<input type="hidden" name="{{ search_param }}" value="{{ search }}">{% endif %}
+  {% for field in fields %}
+  <div class="form-group">
+    <label for="filter-{{ field.param }}">{{ field.param }}</label>
+    <input type="text" class="form-control" id="filter-{{ field.param }}"
+           name="{{ field.param }}" value="{{ field.value }}">
+  </div>
+  {% endfor %}
+  <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
+</form>

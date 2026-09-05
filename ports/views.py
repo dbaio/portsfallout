@@ -30,31 +30,15 @@ from django.views.generic import View, TemplateView, ListView, DetailView
 from django.db import OperationalError
 from django.db.models import Count, Q
 from django.db.models.functions import TruncDay
+from ports.filters import FieldFilterBackend, FilterErrorMixin, build_filter
 from ports.models import Port, Category, Fallout, Server
 from ports.pagination import CappedLimitOffsetPagination
 from ports.serializers import CategorySerializer, PortSerializer, FalloutSerializer
-from ports.utils import InvalidRegexError, IsRegex, ValidateRegex
+from ports.utils import InvalidRegexError
 from rest_framework import filters, viewsets
 from django.utils import timezone as dtz
 
 logger = logging.getLogger(__name__)
-
-
-def build_filter(field, value, fallback_lookup):
-    """Build the Q object for one user supplied filter field
-
-    A value that looks like a regex is validated before being handed to the
-    database, anything else falls back to a plain lookup.
-
-    Raises:
-        InvalidRegexError -- if the value is a regex we refuse to run
-    """
-
-    if IsRegex(value):
-        ValidateRegex(value)
-        return Q(**{f'{field}__iregex': value})
-
-    return Q(**{f'{field}__{fallback_lookup}': value})
 
 
 class RegexFilterMixin:
@@ -335,34 +319,69 @@ def about(request):
     return render(request, 'ports/about.html', context_dict)
 
 
-class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+# The API filters are named and matched exactly as the ones of the pages
+# above, so the same value means the same thing in both places.
+
+class CategoryViewSet(FilterErrorMixin, viewsets.ReadOnlyModelViewSet):
     """
     API endpoint for Categories.
+
+    `search` matches the name. `name` does the same, and takes a regular
+    expression.
     """
     search_fields = ['name']
-    filter_backends = (filters.SearchFilter,)
+    filter_fields = {'name': ('name', 'icontains')}
+    filter_backends = (filters.SearchFilter, FieldFilterBackend)
     pagination_class = CappedLimitOffsetPagination
     queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
 
 
-class PortViewSet(viewsets.ReadOnlyModelViewSet):
+class PortViewSet(FilterErrorMixin, viewsets.ReadOnlyModelViewSet):
     """
     API endpoint for Port's.
+
+    `search` matches the origin or the maintainer. `maintainer` matches from
+    the start of the address and `port` a substring of the origin, both taking
+    a regular expression.
     """
     search_fields = ['origin', 'maintainer']
-    filter_backends = (filters.SearchFilter,)
+    filter_fields = {
+        'maintainer': ('maintainer', 'istartswith'),
+        'port': ('origin', 'icontains'),
+    }
+    filter_backends = (filters.SearchFilter, FieldFilterBackend)
     pagination_class = CappedLimitOffsetPagination
     queryset = Port.objects.all().prefetch_related('categories').order_by('origin')
     serializer_class = PortSerializer
 
 
-class FalloutViewSet(viewsets.ReadOnlyModelViewSet):
+class FalloutViewSet(FilterErrorMixin, viewsets.ReadOnlyModelViewSet):
     """
     API endpoint for Fallout's.
+
+    `search` matches the maintainer, the origin, the environment or the build
+    phase. The rest name one field each: `maintainer` matches from the start of
+    the address, `port` a substring of the origin, `env` a substring of the
+    environment, `category` the build phase exactly, `flavor` a substring of
+    the flavor, and all of them take a regular expression.
+
+    `date_after` and `date_before` bound the range, so a client that already
+    holds a copy can ask only for what came after it.
     """
     search_fields = ['maintainer', 'port__origin', 'env', 'category']
-    filter_backends = (filters.SearchFilter,)
+    filter_fields = {
+        'maintainer': ('maintainer', 'istartswith'),
+        'port': ('port__origin', 'icontains'),
+        'env': ('env', 'icontains'),
+        'category': ('category', 'iexact'),
+        'flavor': ('flavor', 'icontains'),
+    }
+    date_filter_fields = {
+        'date_after': ('date', 'gte'),
+        'date_before': ('date', 'lte'),
+    }
+    filter_backends = (filters.SearchFilter, FieldFilterBackend)
     pagination_class = CappedLimitOffsetPagination
     queryset = (Fallout.objects.all()
                 .select_related('port')

@@ -140,6 +140,19 @@ h2 { font-size: 1.3rem; font-weight: 650; }
 h3 { font-size: 1.05rem; font-weight: 650; }
 p { margin: 0 0 0.9rem; }
 
+code { font-family: var(--mono); font-size: 0.88em; }
+/* A command line holds a URL, which has nowhere to wrap, so the block scrolls
+   rather than pushing the page sideways on a phone. */
+pre {
+  margin: 0 0 0.9rem;
+  padding: 10px 13px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--sunken);
+  overflow-x: auto;
+}
+pre code { font-size: 0.82rem; }
+
 .container { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 20px; }
 .page { flex: 1; padding: 26px 0 48px; }
 .stack { display: flex; flex-direction: column; gap: 22px; }

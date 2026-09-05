@@ -12,6 +12,23 @@
   way to search/query the <a href="https://lists.freebsd.org/archives/freebsd-pkg-fallout/">FreeBSD pkg-fallout</a>
   archive.</p>
 
+<p>The same data is available from a read-only <a href="/api/">API</a>. The filters of these
+  pages work there too, under the same names, so every fallout of a maintainer is either the
+  start of an address or the whole of one:</p>
+
+<pre><code>$ curl -s 'https://portsfallout.com/api/fallout/?format=json&amp;maintainer=ports'
+$ curl -s 'https://portsfallout.com/api/fallout/?format=json&amp;maintainer=ports@FreeBSD.org'</code></pre>
+
+<p>Any of them takes a regular expression as well, here and there:
+  <a href="{% url 'ports:fallout' %}?maintainer=%5E(ports%7Cx11)@">?maintainer=^(ports|x11)@</a>. The
+  <a href="https://github.com/dbaio/portsfallout/blob/main/README.rst#api">API section of the
+  README</a> covers the rest: pagination and what <code>search</code> matches.</p>
+
+<p>A date bounds the answer, which is how a copy is kept current without walking the whole
+  archive again:</p>
+
+<pre><code>$ curl -s 'https://portsfallout.com/api/fallout/?format=json&amp;date_after=2026-09-01'</code></pre>
+
 <p><a href="https://github.com/dbaio/portsfallout/blob/main/changelog.rst">portsfallout v{% version %}</a></p>
 
 {% endblock %}
