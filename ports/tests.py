@@ -22,7 +22,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from io import StringIO
 from pathlib import Path
 from unittest import mock
@@ -30,8 +30,9 @@ from unittest import mock
 import requests
 from django.contrib.staticfiles import finders
 from django.core.management import call_command
-from django.db import OperationalError
-from django.test import TestCase, override_settings
+from django.db import IntegrityError, OperationalError, connection, transaction
+from django.db.migrations.executor import MigrationExecutor
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone as dtz
 
@@ -371,7 +372,7 @@ class ApiFilterTests(TestCase):
             port=port, env=env, version='1.0', category='build', flavor=flavor,
             maintainer=maintainer, last_committer='x@FreeBSD.org',
             date=cls.now - timedelta(days=days),
-            log_url='https://pkg-status.freebsd.org/beefy18/x.log',
+            log_url=f'https://pkg-status.freebsd.org/beefy18/{port.name}.log',
             build_url='https://pkg-status.freebsd.org/beefy18/',
             report_url='https://lists.freebsd.org/1.html')
 
@@ -908,3 +909,194 @@ class OrphanLogReadTests(TestCase):
 
     def test_a_log_with_no_marker_has_no_phase(self):
         self.assertIsNone(self.command().find_failing_phase(LOG_HEADER))
+
+
+# The same fallout as each of the two sources reads it. The report is sent a
+# second before the log is closed, and names the phase in its subject; the
+# orphan finder has the end time of the log, no report, and the last phase
+# marker within the head of the log.
+FALLOUT_LOG_URL = ('https://pkg-status.freebsd.org/beefy19/data/144i386-quarterly/'
+                   '17af07f5de95/logs/py312-hieroglyph-2.1.0_1.log')
+FALLOUT_REPORT_URL = ('https://lists.freebsd.org/archives/freebsd-pkg-fallout/'
+                      '2026-August/978112.html')
+
+FROM_THE_LOG = dict(
+    env='144i386-quarterly', version='2.1.0_1', category='lib-depends',
+    maintainer='dbaio@FreeBSD.org', last_committer='',
+    date=datetime(2026, 8, 4, 21, 5, 11, tzinfo=timezone.utc),
+    build_url='https://pkg-status.freebsd.org/beefy19/build.html?'
+              'mastername=144i386-quarterly&build=17af07f5de95',
+    report_url='', flavor='py312', server='beefy19.nyi.freebsd.org',
+    **LOG_HEADER_VALUES)
+
+FROM_THE_REPORT = dict(FROM_THE_LOG, category='build',
+                       date=datetime(2026, 8, 4, 21, 5, 10, tzinfo=timezone.utc),
+                       report_url=FALLOUT_REPORT_URL)
+
+
+class FalloutRecordTests(TestCase):
+    """One row per build log, whichever source reaches it first"""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.port = Port.objects.create(origin='textproc/py-hieroglyph',
+                                       name='py-hieroglyph',
+                                       maintainer='dbaio@FreeBSD.org',
+                                       main_category='textproc')
+
+    def record(self, **fields):
+        return Fallout.objects.record(self.port, FALLOUT_LOG_URL, **fields)
+
+    def test_a_log_not_seen_before_is_stored(self):
+        fallout, created = self.record(**FROM_THE_REPORT)
+
+        self.assertTrue(created)
+        self.assertEqual(fallout.port, self.port)
+        self.assertEqual(fallout.report_url, FALLOUT_REPORT_URL)
+
+    def test_the_report_completes_the_row_the_orphan_finder_made(self):
+        Fallout.objects.create(port=self.port, log_url=FALLOUT_LOG_URL, **FROM_THE_LOG)
+
+        fallout, created = self.record(**FROM_THE_REPORT)
+
+        self.assertFalse(created)
+        self.assertEqual(Fallout.objects.count(), 1)
+        fallout.refresh_from_db()
+        self.assertEqual(fallout.report_url, FALLOUT_REPORT_URL)
+        self.assertEqual(fallout.category, 'build')
+        self.assertEqual(fallout.date, FROM_THE_REPORT['date'])
+
+    def test_a_blank_does_not_wipe_what_is_stored(self):
+        Fallout.objects.create(port=self.port, log_url=FALLOUT_LOG_URL, **FROM_THE_REPORT)
+
+        fallout, _ = self.record(**dict(FROM_THE_REPORT, report_url='', package_name=''))
+
+        fallout.refresh_from_db()
+        self.assertEqual(fallout.report_url, FALLOUT_REPORT_URL)
+        self.assertEqual(fallout.package_name, LOG_HEADER_VALUES['package_name'])
+
+    def test_a_row_that_did_not_change_is_not_written(self):
+        """The crawler reads the whole month again every day"""
+
+        Fallout.objects.create(port=self.port, log_url=FALLOUT_LOG_URL, **FROM_THE_REPORT)
+
+        with self.assertNumQueries(1):
+            self.record(**FROM_THE_REPORT)
+
+    def test_the_database_refuses_a_second_row_for_a_log(self):
+        Fallout.objects.create(port=self.port, log_url=FALLOUT_LOG_URL, **FROM_THE_LOG)
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Fallout.objects.create(port=self.port, log_url=FALLOUT_LOG_URL,
+                                   **FROM_THE_REPORT)
+
+
+class OrphanSaveTests(TestCase):
+    """What `find_orphan_fallouts` stores out of what it read"""
+
+    EXTRACTED = {
+        'date': 'Tue Aug  4 21:05:11 UTC 2026',
+        'maintainer': 'dbaio@FreeBSD.org',
+        'log_url': FALLOUT_LOG_URL,
+        'build_url': FROM_THE_LOG['build_url'],
+        'flavor': 'py312',
+        'port_name': 'textproc/py-hieroglyph',
+        'report_url': None,
+        'last_committer': None,
+        'error_phase': 'lib-depends',
+        'version': '2.1.0_1',
+        'env': '144i386-quarterly',
+        **LOG_HEADER_VALUES,
+    }
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.port = Port.objects.create(origin='textproc/py-hieroglyph',
+                                       name='py-hieroglyph',
+                                       maintainer='dbaio@FreeBSD.org',
+                                       main_category='textproc')
+
+    def command(self):
+        return FindOrphanFallouts(stdout=StringIO())
+
+    def test_an_orphan_log_is_stored_without_a_report(self):
+        self.command().save_fallout_entry(self.EXTRACTED)
+
+        fallout = Fallout.objects.get()
+        self.assertEqual(fallout.port, self.port)
+        self.assertEqual(fallout.report_url, '')
+        self.assertEqual(fallout.server, 'beefy19.nyi.freebsd.org')
+        self.assertEqual(fallout.date, FROM_THE_LOG['date'])
+        for field, value in FROM_THE_LOG.items():
+            with self.subTest(field=field):
+                self.assertEqual(getattr(fallout, field), value)
+
+    def test_a_log_the_crawler_stored_meanwhile_is_left_alone(self):
+        """Its report named the phase, which the head of the log may not"""
+
+        Fallout.objects.create(port=self.port, log_url=FALLOUT_LOG_URL, **FROM_THE_REPORT)
+
+        self.command().save_fallout_entry(self.EXTRACTED)
+
+        fallout = Fallout.objects.get()
+        self.assertEqual(fallout.category, 'build')
+        self.assertEqual(fallout.date, FROM_THE_REPORT['date'])
+        self.assertEqual(fallout.report_url, FALLOUT_REPORT_URL)
+
+    def test_a_log_already_stored_is_not_fetched(self):
+        Fallout.objects.create(port=self.port, log_url=FALLOUT_LOG_URL, **FROM_THE_REPORT)
+        get = mock.Mock()
+
+        with mock.patch('ports.management.commands.find_orphan_fallouts.requests.get', get):
+            self.command().process_log_url(
+                FALLOUT_LOG_URL.replace('/logs/', '/logs/errors/'))
+
+        get.assert_not_called()
+
+
+class MergeDuplicateFalloutsTests(TransactionTestCase):
+    """The migration merging the pairs the two sources had stored"""
+
+    def migrate(self, target):
+        executor = MigrationExecutor(connection)
+        executor.migrate([('ports', target)])
+        return executor.loader.project_state([('ports', target)]).apps
+
+    def tearDown(self):
+        # Leave the schema where the rest of the suite expects it.
+        executor = MigrationExecutor(connection)
+        executor.migrate(executor.loader.graph.leaf_nodes())
+
+    def test_the_pair_is_merged_into_the_row_with_the_report(self):
+        apps = self.migrate('0008_fallout_log_details')
+        Port = apps.get_model('ports', 'Port')
+        Fallout = apps.get_model('ports', 'Fallout')
+        port = Port.objects.create(origin='textproc/py-hieroglyph',
+                                   name='py-hieroglyph',
+                                   maintainer='dbaio@FreeBSD.org',
+                                   main_category='textproc')
+
+        # Made before the crawler read the log header, so short of the details
+        # and the server, which its double supplies.
+        Fallout.objects.create(port=port, log_url=FALLOUT_LOG_URL, **FROM_THE_LOG)
+        crawled = Fallout.objects.create(
+            port=port, log_url=FALLOUT_LOG_URL,
+            **dict(FROM_THE_REPORT, server='',
+                   **{field: '' for field in LOG_HEADER_VALUES}))
+        other = Fallout.objects.create(
+            port=port, log_url=FALLOUT_LOG_URL.replace('py312', 'py311'),
+            **FROM_THE_REPORT)
+
+        apps = self.migrate('0009_fallout_log_url_unique')
+        Fallout = apps.get_model('ports', 'Fallout')
+
+        self.assertEqual(Fallout.objects.count(), 2)
+        self.assertTrue(Fallout.objects.filter(pk=other.pk).exists())
+        kept = Fallout.objects.get(log_url=FALLOUT_LOG_URL)
+        self.assertEqual(kept.pk, crawled.pk)
+        self.assertEqual(kept.category, 'build')
+        self.assertEqual(kept.date, FROM_THE_REPORT['date'])
+        self.assertEqual(kept.server, 'beefy19.nyi.freebsd.org')
+        for field, value in LOG_HEADER_VALUES.items():
+            with self.subTest(field=field):
+                self.assertEqual(getattr(kept, field), value)

@@ -54,6 +54,45 @@ class Port(models.Model):
         return reverse('ports:detail', args=[self.origin])
 
 
+class FalloutManager(models.Manager):
+
+    def record(self, port, log_url, **fields):
+        """Store what a source knows about the fallout of a build log
+
+        A fallout reaches us twice: from the report the crawler reads, and
+        from the builder's errors listing `find_orphan_fallouts` walks. The
+        report is sent a second or so before the log is closed, and names a
+        phase the head of the log may not reach, so the two never agree on
+        every field. The log URL is what identifies the fallout, and the
+        second source completes the row the first one made.
+
+        What the source knows wins; a blank never replaces what is stored,
+        as a source without a field says nothing about it.
+
+        Arguments:
+            port [Port] -- the port the log belongs to
+            log_url [string] -- the build log
+            fields -- everything else the source read
+        Returns:
+            [tuple] -- the fallout and whether it was created, as
+                       `get_or_create` does
+        """
+
+        fallout, created = self.get_or_create(log_url=log_url,
+                                              defaults={'port': port, **fields})
+        if created:
+            return fallout, True
+
+        changed = [field for field, value in fields.items()
+                   if value and getattr(fallout, field) != value]
+        for field in changed:
+            setattr(fallout, field, fields[field])
+        if changed:
+            fallout.save(update_fields=changed)
+
+        return fallout, False
+
+
 class Fallout(models.Model):
     port = models.ForeignKey(Port, on_delete=models.CASCADE)
     env = models.CharField(max_length=48, db_index=True)
@@ -62,7 +101,9 @@ class Fallout(models.Model):
     maintainer = models.EmailField(db_index=True)
     last_committer = models.EmailField()
     date = models.DateTimeField(db_index=True)
-    log_url = models.URLField()
+    # A log is written once, so its URL is what identifies a fallout: see
+    # `FalloutManager.record`.
+    log_url = models.URLField(unique=True)
     build_url = models.URLField()
     report_url = models.URLField()
     server = models.CharField(max_length=48, blank=True)
@@ -77,6 +118,8 @@ class Fallout(models.Model):
     poudriere_version = models.CharField(max_length=48, blank=True)
     host_osversion = models.CharField(max_length=16, blank=True)
     jail_osversion = models.CharField(max_length=16, blank=True)
+
+    objects = FalloutManager()
 
     def __str__(self):
         # head-arm64-default | net/findomain

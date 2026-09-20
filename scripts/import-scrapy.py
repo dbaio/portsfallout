@@ -124,46 +124,21 @@ def read_scrapy_json():
             i_log_details = {field: row.get(field, '')
                              for field, _ in LOG_HEADER_FIELDS.values()}
 
+            # A row `find_orphan_fallouts` stored for this log before its
+            # report was crawled is completed rather than duplicated.
             if port:
-                fallout, created = Fallout.objects.get_or_create(port=port,
-                                                        env=i_env,
-                                                        version=i_version,
-                                                        category=i_category,
-                                                        maintainer=process_mail(row['maintainer']),
-                                                        last_committer=process_mail(row['last_committer']),
-                                                        date=i_date,
-                                                        log_url=row['log_url'],
-                                                        build_url=row['build_url'].replace('&amp;','&'),
-                                                        defaults={'flavor': row['flavor'],
-                                                                  'report_url': row['report_url'],
-                                                                  'server': i_server,
-                                                                  **i_log_details}
-                                                        ,)
-
-                if not created:
-                    changed_fields: int = 0
-                    if fallout.flavor != row['flavor']:
-                        fallout.flavor = row['flavor']
-                        changed_fields += 1
-
-                    if fallout.server != i_server:
-                        fallout.server = i_server
-                        changed_fields += 1
-
-                    if fallout.report_url != row['report_url']:
-                        fallout.report_url = row['report_url']
-                        changed_fields += 1
-
-                    # A json crawled before the log header was read carries none
-                    # of these, so a blank means "not read" rather than "empty"
-                    # and must not wipe what an earlier run stored.
-                    for field, value in i_log_details.items():
-                        if value and getattr(fallout, field) != value:
-                            setattr(fallout, field, value)
-                            changed_fields += 1
-
-                    if changed_fields > 0:
-                        fallout.save()
+                Fallout.objects.record(port, row['log_url'],
+                                       env=i_env,
+                                       version=i_version,
+                                       category=i_category,
+                                       maintainer=process_mail(row['maintainer']),
+                                       last_committer=process_mail(row['last_committer']),
+                                       date=i_date,
+                                       build_url=row['build_url'].replace('&amp;', '&'),
+                                       report_url=row['report_url'],
+                                       flavor=row['flavor'],
+                                       server=i_server,
+                                       **i_log_details)
 
 
 if __name__ == "__main__":

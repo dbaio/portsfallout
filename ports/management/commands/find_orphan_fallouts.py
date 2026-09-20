@@ -283,10 +283,11 @@ class Command(BaseCommand):
         return phases[-1] if phases else None
 
     def save_fallout_entry(self, extracted_data):
-        """
-        Saves the extracted fallout data into the database.
-        - If the entry exists, update it only if changes are detected.
-        - If it doesn’t exist, create a new entry.
+        """Store the fallout read out of a log
+
+        `process_log_url` only gets here for a log the database does not
+        hold. Should the crawler have stored it meanwhile, that row is the
+        one with the report, and it is left as it is.
         """
         # From https://github.com/freebsd/pkg-status/blob/master/servers.txt
         server_dict = {
@@ -357,41 +358,20 @@ class Command(BaseCommand):
             port = None
 
         if port:
-            fallout, created = Fallout.objects.get_or_create(
-                port=port,
-                env=i_env,
-                version=i_version,
-                category=i_category,
-                maintainer=i_maintainer,
-                last_committer=i_last_committer,
-                date=i_date,
+            Fallout.objects.get_or_create(
                 log_url=i_log_url,
-                build_url=i_build_url,
-                report_url=i_report_url,
-                defaults={'flavor': i_flavor,
+                defaults={'port': port,
+                          'env': i_env,
+                          'version': i_version,
+                          'category': i_category,
+                          'maintainer': i_maintainer,
+                          'last_committer': i_last_committer,
+                          'date': i_date,
+                          'build_url': i_build_url,
+                          'report_url': i_report_url,
+                          'flavor': i_flavor,
                           'server': i_server,
                           **i_log_details}
             )
-
-            if not created:
-                changed_fields: int = 0
-                if fallout.flavor != i_flavor:
-                    fallout.flavor = i_flavor
-                    changed_fields += 1
-
-                if fallout.server != i_server:
-                    fallout.server = i_server
-                    changed_fields += 1
-
-                # A log missing the header block says nothing about these, so a
-                # blank must not wipe what an earlier run stored.
-                for field, value in i_log_details.items():
-                    if value and getattr(fallout, field) != value:
-                        setattr(fallout, field, value)
-                        changed_fields += 1
-
-                if changed_fields > 0:
-                    fallout.save()
-
         else:
             self.stdout.write(f"   Port not found: {i_port_name} – Entry not saved.")
