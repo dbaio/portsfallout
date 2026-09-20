@@ -24,4 +24,4 @@
 # The one place the release is written down. The about page shows it and every
 # stylesheet and script is served with it as its cache busting query, so a
 # release is this line plus a changelog entry.
-__version__ = '1.14.0'
+__version__ = '1.14.1'

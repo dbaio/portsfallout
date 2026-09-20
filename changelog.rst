@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 1.14.1
+--------------
+
+* Keep one fallout per build log: the report is sent a second before the log
+  is closed, so the crawler never found the row ``find_orphan_fallouts`` had
+  made and stored a second one. A migration merges the pairs already stored
+  and makes the log URL unique
+
 Version 1.14.0
 --------------
 
