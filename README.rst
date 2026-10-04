@@ -194,7 +194,10 @@ null:
    }
 
 Each fallout carries the port it belongs to, already expanded, so listing the
-fallouts of a maintainer does not need a second request per row. The order is
+fallouts of a maintainer does not need a second request per row. The port's
+``version`` is the one the main branch has today, while the fallout's is the
+one that failed; the web interface leaves out the fallouts of the main branch
+where the two differ unless asked, the API returns every one. The order is
 fixed: fallouts newest first, ports by origin, categories by name.
 
 

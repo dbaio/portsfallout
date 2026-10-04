@@ -15,6 +15,7 @@
     {% if form_category %}<span class="chip">category: {{ form_category }}</span>{% endif %}
     {% if form_flavor %}<span class="chip">flavor: {{ form_flavor }}</span>{% endif %}
     {% for category in form_categories %}<span class="chip">{{ category }}</span>{% endfor %}
+    {% if form_older %}<span class="chip">older versions</span>{% endif %}
     <span class="count">{{ page_obj.paginator.count|intcomma }} entries</span>
   </summary>
 
@@ -51,6 +52,13 @@
         {% endfor %}
       </select>
     </div>
+    <fieldset class="field">
+      <legend>Options</legend>
+      <label class="check">
+        <input type="checkbox" name="older" value="1" {% if form_older %}checked{% endif %}>
+        See failures for older versions
+      </label>
+    </fieldset>
     <div class="filter-actions">
       <button type="submit" class="btn">Filter</button>
       <span class="muted small">Regular expressions are allowed.</span>
@@ -68,6 +76,7 @@
     <thead>
       <tr>
         <th scope="col">port</th>
+        <th scope="col" title="The version that failed, and the one the ports tree has now when it has moved on">version</th>
         <th scope="col">maintainer</th>
         <th scope="col">build environment</th>
         <th scope="col">category</th>
@@ -83,6 +92,7 @@
         <td{% ifchanged fallout.port fallout.flavor %}{% else %} class="repeat"{% endifchanged %}>
           <a href="{% url 'ports:fdetail' fallout.id %}">{{ fallout.port }}{% if fallout.flavor %}@{{ fallout.flavor }}{% endif %}</a>
         </td>
+        <td data-label="version"{% ifchanged fallout.port fallout.version fallout.outdated %}{% if fallout.outdated %} class="stale"{% endif %}{% else %} class="repeat{% if fallout.outdated %} stale{% endif %}"{% endifchanged %}>{{ fallout.version }}{% if fallout.outdated %} <span class="latest">&rarr; {{ fallout.port.version }}</span>{% endif %}</td>
         <td data-label="maintainer"{% ifchanged fallout.maintainer %} class="dim"{% else %} class="repeat"{% endifchanged %}>{{ fallout.maintainer }}</td>
         <td data-label="build env"{% ifchanged fallout.env %}{% else %} class="repeat"{% endifchanged %}>{% if fallout.env %}{% with parts=fallout.env|env_split %}<span class="env-rail{% if parts.quarterly %} quarterly{% endif %}">{{ parts.head }}<span class="env-branch">{{ parts.branch }}</span></span>{% endwith %}{% endif %}</td>
         <td data-label="category">{% if fallout.category %}<span class="phase phase-{{ fallout.category|phase_family }}">{{ fallout.category }}</span>{% endif %}</td>
@@ -105,6 +115,11 @@
 {% include 'ports/pagination.html' %}
 {% else %}
   <p class="muted">No pkg-fallout matches this filter.</p>
+{% endif %}
+
+{% if not form_older %}
+  <p class="muted small">Failures of the main branch for a version the ports tree has since moved
+    past are left out. Tick <em>See failures for older versions</em> to include them.</p>
 {% endif %}
 
 <script src="{% versioned_static 'js/datetime_toggle.js' %}"></script>

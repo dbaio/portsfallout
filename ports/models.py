@@ -22,6 +22,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
+from django.db.models import F, Q
 from django.urls import reverse
 
 class Category(models.Model):
@@ -46,12 +47,31 @@ class Port(models.Model):
     main_category = models.CharField(max_length=64)
     categories = models.ManyToManyField(Category)
 
+    # The version the port has in the tree today, read from the INDEX of the
+    # main branch by `scripts/import-index.py`. Blank until that runs, once the
+    # port is gone from the tree, and for the few ports whose flavors do not
+    # share one version, where the INDEX names several and none is the answer.
+    version = models.CharField(max_length=48, blank=True)
+
     def __str__(self):
         return self.origin
 
     def get_absolute_url(self):
         # The origin is unique, so it is the natural key for the URL.
         return reverse('ports:detail', args=[self.origin])
+
+
+# A fallout the tree has moved past: the port has a newer version than the one
+# that failed. It is the SQL twin of `Fallout.outdated`, and the two say the
+# same thing about a row.
+#
+# Only a build from the main branch can be judged: `Port.version` comes from
+# the INDEX of that branch, and quarterly carries its own versions, for which
+# nothing is published. A blank on either side is not knowing, not a
+# difference.
+OUTDATED = (Q(env__endswith='-default')
+            & ~Q(version='') & ~Q(port__version='')
+            & ~Q(version=F('port__version')))
 
 
 class FalloutManager(models.Manager):
@@ -124,6 +144,17 @@ class Fallout(models.Model):
     def __str__(self):
         # head-arm64-default | net/findomain
         return self.env + " | " + self.port.origin
+
+    @property
+    def outdated(self):
+        """Whether the tree has moved past the version that failed
+
+        The Python side of `OUTDATED`, for the templates: a row read with
+        `select_related('port')` answers without another query.
+        """
+        return (self.env.endswith('-default')
+                and bool(self.version) and bool(self.port.version)
+                and self.version != self.port.version)
 
 
 class BuildEnv(models.Model):

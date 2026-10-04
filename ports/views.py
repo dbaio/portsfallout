@@ -31,7 +31,7 @@ from django.db import OperationalError
 from django.db.models import Count, Q
 from django.db.models.functions import TruncDay
 from ports.filters import FieldFilterBackend, FilterErrorMixin, build_filter
-from ports.models import Port, Category, Fallout, Server
+from ports.models import OUTDATED, Port, Category, Fallout, Server
 from ports.pagination import CappedLimitOffsetPagination
 from ports.serializers import CategorySerializer, PortSerializer, FalloutSerializer
 from ports.utils import InvalidRegexError
@@ -200,6 +200,7 @@ class FalloutListView(RegexFilterMixin, ListView):
         category = self.request.GET.get('category', '').strip()
         flavor = self.request.GET.get('flavor', '').strip()
         categories = self.request.GET.getlist('categories')
+        older = self.request.GET.get('older')
 
         try:
             query = build_filter('maintainer', maintainer, 'istartswith')
@@ -224,6 +225,11 @@ class FalloutListView(RegexFilterMixin, ListView):
 
         queryset = Fallout.objects.filter(query).select_related('port').order_by('-date')
 
+        # A failure the tree has moved past is most likely fixed, or at least
+        # not the failure the port has now, so it is left out until asked for.
+        if not older:
+            queryset = queryset.exclude(OUTDATED)
+
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -235,10 +241,12 @@ class FalloutListView(RegexFilterMixin, ListView):
         context['form_category'] = self.request.GET.get('category', '')
         context['form_flavor'] = self.request.GET.get('flavor', '')
         context['form_categories'] = self.request.GET.getlist('categories')
+        context['form_older'] = bool(self.request.GET.get('older'))
         context['categories'] = Category.objects.all().order_by('name')
         context['has_filter'] = any([context['form_maintainer'], context['form_port'],
                                      context['form_env'], context['form_category'],
-                                     context['form_flavor'], context['form_categories']])
+                                     context['form_flavor'], context['form_categories'],
+                                     context['form_older']])
         return context
 
 
@@ -289,7 +297,7 @@ class PortDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context['navbar_list'] = 'active'
         context['fallout_list'] = Fallout.objects.filter(
-            port=self.object).order_by('-date')[:50]
+            port=self.object).select_related('port').order_by('-date')[:50]
         return context
 
 

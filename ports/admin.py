@@ -28,7 +28,7 @@ from ports.models import Category, Port, Fallout, Server, BuildEnv
 class PortAdmin(admin.ModelAdmin):
     ordering = ['origin']
     search_fields = ['name', 'origin', 'maintainer']
-    list_display = ['origin', 'maintainer', 'www']
+    list_display = ['origin', 'version', 'maintainer', 'www']
     list_filter = ['main_category']
 
 

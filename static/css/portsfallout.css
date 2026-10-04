@@ -284,14 +284,32 @@ pre code { font-size: 0.82rem; }
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   align-items: start;
 }
-.field label {
+/* A group of checkboxes is a fieldset, which arrives with a frame of its own.
+   It takes a row for itself: a checkbox and its sentence do not fit a column
+   sized for an input. */
+fieldset.field { grid-column: 1 / -1; border: 0; padding: 0; margin: 0; min-width: 0; }
+.field label, .field legend {
   display: block;
+  padding: 0;
   font-size: 0.72rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   margin-bottom: 4px;
 }
+.field .check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 0.88rem;
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+/* The input rule below sizes text inputs to their column. */
+.field .check input { width: auto; padding: 0; margin: 0; accent-color: var(--accent); }
 .field input, .field select {
   width: 100%;
   padding: 6px 9px;
@@ -381,6 +399,14 @@ table.data tbody tr:last-child td { border-bottom: 0; }
 table.data tbody tr:hover td { background: var(--sunken); }
 table.data td.num { text-align: right; }
 table.data .dim { color: var(--muted); }
+
+/* The version column: what failed and, after the arrow, what the tree has
+   today when it has moved on. Such a failure is most likely fixed, or at
+   least not the one the port has now, so the whole cell steps back rather
+   than the newer number stepping forward: what the eye should catch is the
+   row that still matters, and that is the one left in ink. Kept above
+   .repeat so a repeated cell still hides. */
+table.data .stale { color: var(--muted); }
 
 /* A value identical to the row above is kept in the DOM but hidden, so the
    column still copies and reads correctly. Hover brings it back. */
@@ -767,6 +793,7 @@ footer.site {
      information rather than noise. Bringing the text back has to bring its
      rail and its dimmed branch back with it. */
   .table-wrap table.data td.repeat { color: inherit; }
+  .table-wrap table.data td.repeat.stale { color: var(--muted); }
   .table-wrap table.data td.repeat .env-branch { color: var(--muted); }
   .table-wrap table.data td.repeat .env-rail { border-left-color: var(--rule-firm); }
   .table-wrap table.data tbody tr:hover td { background: none; }

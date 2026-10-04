@@ -38,7 +38,7 @@ from django.utils import timezone as dtz
 
 from ports.management.commands.find_orphan_fallouts import (
     LOG_HEAD_BYTES, LOG_TAIL_BYTES, Command as FindOrphanFallouts)
-from ports.models import Category, Fallout, Port
+from ports.models import OUTDATED, Category, Fallout, Port
 from ports.templatetags.build_env import env_split, osversion
 from ports.templatetags.commit import COMMIT_MIRRORS, commit_mirrors
 from ports.templatetags.phase import PHASE_FAMILIES, phase_family
@@ -1100,3 +1100,160 @@ class MergeDuplicateFalloutsTests(TransactionTestCase):
         for field, value in LOG_HEADER_VALUES.items():
             with self.subTest(field=field):
                 self.assertEqual(getattr(kept, field), value)
+
+
+class OutdatedVersionTests(TestCase):
+    """A fallout the tree has moved past, and what the pages do with it"""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.port = Port.objects.create(origin='math/lean4', name='lean4',
+                                       maintainer='dbaio@FreeBSD.org',
+                                       main_category='math', version='4.34.0')
+        cls.unknown = Port.objects.create(origin='devel/libclc', name='libclc',
+                                          maintainer='dbaio@FreeBSD.org',
+                                          main_category='devel')
+
+    def fallout(self, port=None, **fields):
+        """A fallout of a version the tree has moved past, unless told otherwise"""
+
+        defaults = dict(env='144amd64-default', version='4.22.0', category='build',
+                        maintainer='dbaio@FreeBSD.org', last_committer='',
+                        date=dtz.now(), build_url='https://pkg-status.freebsd.org/beefy18/',
+                        report_url='https://lists.freebsd.org/1.html')
+        count = Fallout.objects.count()
+        return Fallout.objects.create(
+            port=port or self.port,
+            log_url=f'https://pkg-status.freebsd.org/beefy18/{count}.log',
+            **dict(defaults, **fields))
+
+    def test_the_property_and_the_query_agree(self):
+        cases = [
+            ('the tree has moved on', dict(), True),
+            ('the version that failed is the one in the tree', dict(version='4.34.0'), False),
+            ('quarterly carries its own versions', dict(env='144amd64-quarterly'), False),
+            ('nothing known about the tree', dict(port=self.unknown), False),
+            ('nothing known about the failure', dict(version=''), False),
+        ]
+        for name, fields, outdated in cases:
+            with self.subTest(case=name):
+                fallout = self.fallout(**fields)
+                self.assertIs(fallout.outdated, outdated)
+                self.assertEqual(
+                    Fallout.objects.filter(OUTDATED).filter(pk=fallout.pk).exists(),
+                    outdated)
+
+    def test_the_list_leaves_them_out_until_asked(self):
+        current = self.fallout(version='4.34.0')
+        older = self.fallout()
+
+        response = self.client.get(reverse('ports:fallout'))
+        self.assertEqual(list(response.context['fallout_list']), [current])
+        self.assertFalse(response.context['form_older'])
+        self.assertNotIn('checked', response.content.decode())
+
+        response = self.client.get(reverse('ports:fallout'), {'older': '1'})
+        self.assertCountEqual(response.context['fallout_list'], [older, current])
+        self.assertTrue(response.context['form_older'])
+        html = response.content.decode()
+        self.assertIn('checked', html)
+        self.assertIn('<span class="chip">older versions</span>', html)
+
+    def test_the_row_carries_both_versions(self):
+        self.fallout()
+
+        html = self.client.get(reverse('ports:fallout'), {'older': '1'}).content.decode()
+        self.assertIn('class="stale">4.22.0 <span class="latest">&rarr; 4.34.0</span>', html)
+
+        html = self.client.get(reverse('ports:detail', args=[self.port.origin])).content.decode()
+        self.assertIn('class="stale">4.22.0 <span class="latest">&rarr; 4.34.0</span>', html)
+        self.assertIn('<th scope="row">Version</th><td>4.34.0</td>', html)
+
+    def test_a_current_row_is_left_alone(self):
+        self.fallout(version='4.34.0')
+
+        html = self.client.get(reverse('ports:fallout')).content.decode()
+        self.assertNotIn('stale', html)
+        self.assertNotIn('latest', html)
+
+    def test_the_detail_page_names_the_latest_version(self):
+        older = self.fallout()
+        html = self.client.get(reverse('ports:fdetail', args=[older.id])).content.decode()
+        self.assertIn('<th scope="row">Latest version</th><td>4.34.0 <span class="muted">', html)
+
+        unknown = self.fallout(port=self.unknown)
+        html = self.client.get(reverse('ports:fdetail', args=[unknown.id])).content.decode()
+        self.assertIn('<th scope="row">Latest version</th><td>—</td>', html)
+
+    def test_the_port_page_reads_the_port_once(self):
+        for _ in range(3):
+            self.fallout()
+
+        with self.assertNumQueries(3):
+            # The port, its categories, and the fallouts with the port joined.
+            self.client.get(reverse('ports:detail', args=[self.port.origin]))
+
+
+class IndexVersionTests(TestCase):
+    """What `scripts/import-index.py` reads out of the INDEX"""
+
+    ROWS = [
+        'lean4-4.34.0|/usr/ports/math/lean4|/usr/local|Theorem prover|',
+        'g-golf-guile22-0.8.0.a.5|/usr/ports/devel/g-golf|/usr/local|Guile|',
+        'g-golf-guile30-0.8.0.a.5|/usr/ports/devel/g-golf|/usr/local|Guile|',
+        'libclc-15.0.7|/usr/ports/devel/libclc|/usr/local|OpenCL|',
+        'libclc-22.1.5|/usr/ports/devel/libclc|/usr/local|OpenCL|',
+        'intel-em-kmod-7.7.8.1501503|/usr/ports/net/intel-em-kmod|/usr/local|Driver|',
+        'virtual_oss_sndio-1501503|/usr/ports/audio/virtual_oss_sndio|/usr/local|OSS|',
+        'openzfs-kmod-2.4.4.1501503,1|/usr/ports/filesystems/openzfs-kmod|/usr/local|ZFS|',
+    ]
+
+    def test_the_version_is_read_per_origin(self):
+        import bz2
+        import importlib.util
+        import tempfile
+
+        spec = importlib.util.spec_from_file_location(
+            'import_index', Path(__file__).resolve().parent.parent / 'scripts' / 'import-index.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as directory:
+            module.INDEX_FILE = f'{directory}/INDEX-15.bz2'
+            with bz2.open(module.INDEX_FILE, 'wt') as index_file:
+                index_file.write('\n'.join(self.ROWS) + '\n')
+
+            versions = module.read_versions()
+
+        self.assertEqual(versions, {
+            'math/lean4': '4.34.0',
+            # The flavors of a port share its version.
+            'devel/g-golf': '0.8.0.a.5',
+            # Unless they do not, and then no single version is the answer.
+            'devel/libclc': '',
+            # A version built around an OSVERSION names the jail that built
+            # it, so the INDEX does not say what the tree has. Whole, in the
+            # middle, and before a port epoch.
+            'net/intel-em-kmod': '',
+            'audio/virtual_oss_sndio': '',
+            'filesystems/openzfs-kmod': '',
+        })
+
+    def test_an_ordinary_version_is_not_mistaken_for_an_osversion(self):
+        from ports.models import Port  # noqa: F401  (keeps the import local)
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            'import_index', Path(__file__).resolve().parent.parent / 'scripts' / 'import-index.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        for version in ('4.34.0', '1.20180812.1_2', '2.1.0_1', '20240706',
+                        '4.3_7,1', '0.8.0.a.5', '9426_1', '10.4.132.20_4'):
+            with self.subTest(version=version):
+                self.assertIsNone(module.OSVERSION_RE.search(version))
+
+        for version in ('7.7.8.1501503', '1501503', '2.4.4.1501503,1',
+                        'g20211214.1500033_1', '0.1.2.1500033_1'):
+            with self.subTest(version=version):
+                self.assertIsNotNone(module.OSVERSION_RE.search(version))

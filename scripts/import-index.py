@@ -22,6 +22,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import re
 import sys
 import requests
 import bz2
@@ -47,7 +48,52 @@ def fetch_index():
                 index_file.write(chunk)
 
 
+# A `__FreeBSD_version` standing as a component of the version, which is how a
+# kernel module carries the jail it was built for: `net/intel-em-kmod` is
+# 7.7.8.1501503 in this INDEX and 7.7.8.1500033 out of a 15.0 jail. The two
+# are the same port, so the number below says which jail built it, not which
+# version the tree has, and comparing them would call every such build
+# outdated. 111 ports of the INDEX carry one.
+OSVERSION_RE = re.compile(r'(?:^|[.\-_])1[0-9]{6}(?:[._,]|$)')
+
+
+def read_versions():
+    """The version each port has in the tree, by origin
+
+    A port with flavors has one row per flavor, and the version belongs to
+    the port, so the rows agree. A handful carry one per flavor instead, as
+    devel/libclc does for every LLVM release; those come back blank, since
+    a fallout of one flavor held against the version of another would be
+    called outdated for nothing, and not knowing is the honest answer.
+
+    The same answer covers a version built around an OSVERSION, for the same
+    reason: what the INDEX holds is one jail's build of it. Either way a blank
+    only costs the ability to call that port's fallouts outdated, so a version
+    this misreads as an OSVERSION is the cheap direction to be wrong in.
+    """
+
+    versions = {}
+
+    with bz2.open(INDEX_FILE, mode='rt') as index_file:
+        for row in index_file:
+            pkgname, path = row.split("|", 2)[:2]
+
+            origin = path.replace("/usr/ports/", "")
+            # A version never holds a dash, so the last one ends the name.
+            version = pkgname.rsplit("-", 1)[-1]
+
+            if OSVERSION_RE.search(version):
+                version = ""
+
+            if versions.setdefault(origin, version) != version:
+                versions[origin] = ""
+
+    return versions
+
+
 def read_index():
+    versions = read_versions()
+
     with bz2.open(INDEX_FILE, mode='rt') as index_file:
         for row in index_file:
             row_list = row.split("|")
@@ -57,6 +103,7 @@ def read_index():
             p_maintainer = row_list[5]
             p_categories = row_list[6].split()
             p_www = row_list[9]
+            p_version = versions[p_origin]
 
             try:
                 port = Port.objects.get(origin=p_origin)
@@ -82,6 +129,10 @@ def read_index():
                     port.www = p_www
                     different_fields += 1
 
+                if port.version != p_version:
+                    port.version = p_version
+                    different_fields += 1
+
                 if different_fields > 0:
                     port.save()
 
@@ -91,7 +142,8 @@ def read_index():
                                             main_category=p_origin.split("/")[0],
                                             maintainer=p_maintainer,
                                             comment=p_comment,
-                                            www=p_www)[0]
+                                            www=p_www,
+                                            version=p_version)[0]
 
                 # TODO: remove/update categories
                 for category in p_categories:

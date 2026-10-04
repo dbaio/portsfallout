@@ -10,6 +10,7 @@
 <div class="table-wrap">
   <table class="detail">
     <tr><th scope="row">Maintainer</th><td><a href="{% url 'ports:fallout' %}?maintainer={{ port.maintainer|urlencode:"" }}">{{ port.maintainer }}</a></td></tr>
+    <tr><th scope="row">Version</th><td>{{ port.version|default:"—" }}</td></tr>
     <tr><th scope="row">Comment</th><td>{{ port.comment|default:"—" }}</td></tr>
     <tr><th scope="row">Categories</th><td>{% for category in port.categories.all %}{{ category }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
     <tr><th scope="row">Links</th><td>
@@ -28,7 +29,7 @@
   <table class="data">
     <thead>
       <tr>
-        <th scope="col">version</th>
+        <th scope="col" title="The version that failed, and the one the ports tree has now when it has moved on">version</th>
         <th scope="col">build environment</th>
         <th scope="col">category</th>
         <th scope="col">
@@ -40,7 +41,7 @@
     <tbody>
     {% for fallout in fallout_list %}
       <tr>
-        <td{% ifchanged fallout.version %}{% else %} class="repeat"{% endifchanged %}>{{ fallout.version }}{% if fallout.flavor %}@{{ fallout.flavor }}{% endif %}</td>
+        <td{% ifchanged fallout.version fallout.flavor fallout.outdated %}{% if fallout.outdated %} class="stale"{% endif %}{% else %} class="repeat{% if fallout.outdated %} stale{% endif %}"{% endifchanged %}>{{ fallout.version }}{% if fallout.flavor %}@{{ fallout.flavor }}{% endif %}{% if fallout.outdated %} <span class="latest">&rarr; {{ port.version }}</span>{% endif %}</td>
         <td data-label="build env"{% ifchanged fallout.env %}{% else %} class="repeat"{% endifchanged %}>{% if fallout.env %}{% with parts=fallout.env|env_split %}<span class="env-rail{% if parts.quarterly %} quarterly{% endif %}">{{ parts.head }}<span class="env-branch">{{ parts.branch }}</span></span>{% endwith %}{% endif %}</td>
         <td data-label="category">{% if fallout.category %}<span class="phase phase-{{ fallout.category|phase_family }}">{{ fallout.category }}</span>{% endif %}</td>
         <td data-label="date" class="dim"><span class="utc-time" data-utc="{{ fallout.date.isoformat }}"></span></td>
