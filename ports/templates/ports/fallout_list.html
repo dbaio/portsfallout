@@ -54,6 +54,11 @@
     </div>
     <fieldset class="field">
       <legend>Options</legend>
+      {% comment %}
+        The hidden field goes first so an unticked box still sends the choice;
+        the view reads the last `older`. See `OlderVersionsMixin`.
+      {% endcomment %}
+      <input type="hidden" name="older" value="0">
       <label class="check">
         <input type="checkbox" name="older" value="1" {% if form_older %}checked{% endif %}>
         See failures for older versions
@@ -119,7 +124,8 @@
 
 {% if not form_older %}
   <p class="muted small">Failures of the main branch for a version the ports tree has since moved
-    past are left out. Tick <em>See failures for older versions</em> to include them.</p>
+    past are left out. Tick <em>See failures for older versions</em> to include them; the
+    choice is remembered.</p>
 {% endif %}
 
 <script src="{% versioned_static 'js/datetime_toggle.js' %}"></script>

@@ -24,6 +24,24 @@
 
 <h2>Fallout list</h2>
 
+{% comment %}
+  A port's own history is where a superseded version repeats the most, which
+  is what issue #12 is about. The toggle names the count rather than only the
+  state, so what is being left out is visible without turning it on.
+{% endcomment %}
+{% if older_count %}
+  <p class="muted small toggle-older">
+    {% if form_older %}
+      Showing every version, including the {{ older_count }} the ports tree has moved past.
+      <a href="?older=0">Hide them</a>.
+    {% else %}
+      {{ older_count }} fallout{{ older_count|pluralize }} of a version the ports tree has moved
+      past {{ older_count|pluralize:"is,are" }} left out. <a href="?older=1">Show
+      {{ older_count|pluralize:"it,them" }}</a>.
+    {% endif %}
+  </p>
+{% endif %}
+
 {% if fallout_list %}
 <div class="table-wrap">
   <table class="data">

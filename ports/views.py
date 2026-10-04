@@ -26,6 +26,7 @@ from datetime import timedelta
 
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.cache import patch_vary_headers
 from django.views.generic import View, TemplateView, ListView, DetailView
 from django.db import OperationalError
 from django.db.models import Count, Q
@@ -39,6 +40,47 @@ from rest_framework import filters, viewsets
 from django.utils import timezone as dtz
 
 logger = logging.getLogger(__name__)
+
+
+# A year, which is what a preference the user set by hand deserves.
+OLDER_COOKIE = 'olderVersionsPreference'
+OLDER_COOKIE_AGE = 365 * 24 * 60 * 60
+
+
+class OlderVersionsMixin:
+    """Whether to list the fallouts the ports tree has moved past
+
+    The choice reaches a page two ways: from the control the user just used,
+    which names it in the query string, and from the cookie that control
+    wrote, which is what carries it to the next page. The query string wins,
+    and writing the cookie is what makes the next page agree.
+
+    The control submits `older=0` from a hidden field before the checkbox, so
+    an unticked box still names the choice -- a checkbox alone sends nothing,
+    which is indistinguishable from not having asked. The last value is the
+    one the control meant.
+
+    The response varies by cookie, so the site wide cache keeps the two
+    answers apart instead of serving whichever was rendered first.
+    """
+
+    def older_versions(self):
+        values = self.request.GET.getlist('older')
+        if values:
+            return values[-1] not in ('', '0')
+
+        return self.request.COOKIES.get(OLDER_COOKIE) == '1'
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        patch_vary_headers(response, ['Cookie'])
+
+        # Only a page that was told stores the answer; every other one reads it.
+        if request.GET.getlist('older'):
+            response.set_cookie(OLDER_COOKIE, '1' if self.older_versions() else '0',
+                                max_age=OLDER_COOKIE_AGE, samesite='Lax')
+
+        return response
 
 
 class RegexFilterMixin:
@@ -188,7 +230,7 @@ def maintainer(request):
 
     return render(request, 'ports/maintainer.html', context)
 
-class FalloutListView(RegexFilterMixin, ListView):
+class FalloutListView(OlderVersionsMixin, RegexFilterMixin, ListView):
     paginate_by = 50
     model = Fallout
     ordering = ['-date']
@@ -200,7 +242,6 @@ class FalloutListView(RegexFilterMixin, ListView):
         category = self.request.GET.get('category', '').strip()
         flavor = self.request.GET.get('flavor', '').strip()
         categories = self.request.GET.getlist('categories')
-        older = self.request.GET.get('older')
 
         try:
             query = build_filter('maintainer', maintainer, 'istartswith')
@@ -227,7 +268,7 @@ class FalloutListView(RegexFilterMixin, ListView):
 
         # A failure the tree has moved past is most likely fixed, or at least
         # not the failure the port has now, so it is left out until asked for.
-        if not older:
+        if not self.older_versions():
             queryset = queryset.exclude(OUTDATED)
 
         return queryset
@@ -241,7 +282,7 @@ class FalloutListView(RegexFilterMixin, ListView):
         context['form_category'] = self.request.GET.get('category', '')
         context['form_flavor'] = self.request.GET.get('flavor', '')
         context['form_categories'] = self.request.GET.getlist('categories')
-        context['form_older'] = bool(self.request.GET.get('older'))
+        context['form_older'] = self.older_versions()
         context['categories'] = Category.objects.all().order_by('name')
         context['has_filter'] = any([context['form_maintainer'], context['form_port'],
                                      context['form_env'], context['form_category'],
@@ -286,7 +327,7 @@ class PortListView(RegexFilterMixin, ListView):
         return context
 
 
-class PortDetailView(DetailView):
+class PortDetailView(OlderVersionsMixin, DetailView):
     model = Port
     template_name = 'ports/port_detail.html'
     # The origin reads better in a URL than the id, and it is unique already.
@@ -296,8 +337,20 @@ class PortDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['navbar_list'] = 'active'
-        context['fallout_list'] = Fallout.objects.filter(
-            port=self.object).select_related('port').order_by('-date')[:50]
+
+        fallouts = Fallout.objects.filter(port=self.object).select_related('port')
+        older = self.older_versions()
+
+        # The history of one port is where a version that has been superseded
+        # repeats the most, so the same rule the list uses applies here, and
+        # the count is what makes leaving them out visible rather than silent.
+        context['form_older'] = older
+        context['older_count'] = fallouts.filter(OUTDATED).count()
+
+        if not older:
+            fallouts = fallouts.exclude(OUTDATED)
+
+        context['fallout_list'] = fallouts.order_by('-date')[:50]
         return context
 
 

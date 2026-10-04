@@ -39,6 +39,7 @@ from django.utils import timezone as dtz
 from ports.management.commands.find_orphan_fallouts import (
     LOG_HEAD_BYTES, LOG_TAIL_BYTES, Command as FindOrphanFallouts)
 from ports.models import OUTDATED, Category, Fallout, Port
+from ports.views import OLDER_COOKIE
 from ports.templatetags.build_env import env_split, osversion
 from ports.templatetags.commit import COMMIT_MIRRORS, commit_mirrors
 from ports.templatetags.phase import PHASE_FAMILIES, phase_family
@@ -1189,8 +1190,9 @@ class OutdatedVersionTests(TestCase):
         for _ in range(3):
             self.fallout()
 
-        with self.assertNumQueries(3):
-            # The port, its categories, and the fallouts with the port joined.
+        with self.assertNumQueries(4):
+            # The port, the count behind the toggle, its categories, and the
+            # fallouts with the port joined.
             self.client.get(reverse('ports:detail', args=[self.port.origin]))
 
 
@@ -1257,3 +1259,104 @@ class IndexVersionTests(TestCase):
                         'g20211214.1500033_1', '0.1.2.1500033_1'):
             with self.subTest(version=version):
                 self.assertIsNotNone(module.OSVERSION_RE.search(version))
+
+
+@no_cache
+class OlderVersionsPreferenceTests(TestCase):
+    """The choice is remembered between pages, and both lists honour it
+
+    Issue #12: a port's own history is where a superseded version repeats the
+    most, and the option has to survive navigating away from the form.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.port = Port.objects.create(origin='misc/py-onnxruntime',
+                                       name='py-onnxruntime',
+                                       maintainer='dbaio@FreeBSD.org',
+                                       main_category='misc', version='1.30.0')
+
+    def fallout(self, **fields):
+        defaults = dict(env='144i386-default', version='1.27.0', category='build',
+                        maintainer='dbaio@FreeBSD.org', last_committer='',
+                        date=dtz.now(), build_url='https://pkg-status.freebsd.org/beefy18/',
+                        report_url='https://lists.freebsd.org/1.html')
+        count = Fallout.objects.count()
+        return Fallout.objects.create(
+            port=self.port,
+            log_url=f'https://pkg-status.freebsd.org/beefy18/{count}.log',
+            **dict(defaults, **fields))
+
+    def rows(self, response):
+        return list(response.context['fallout_list'])
+
+    def test_the_port_page_leaves_out_the_superseded_versions(self):
+        current = self.fallout(version='1.30.0')
+        older = self.fallout()
+
+        url = reverse('ports:detail', args=[self.port.origin])
+        response = self.client.get(url)
+        self.assertEqual(self.rows(response), [current])
+        self.assertEqual(response.context['older_count'], 1)
+        self.assertIn('Show', response.content.decode())
+
+        response = self.client.get(url, {'older': '1'})
+        self.assertCountEqual(self.rows(response), [older, current])
+        self.assertIn('Hide them', response.content.decode())
+
+    def test_the_toggle_is_absent_when_nothing_is_left_out(self):
+        self.fallout(version='1.30.0')
+
+        html = self.client.get(
+            reverse('ports:detail', args=[self.port.origin])).content.decode()
+        self.assertNotIn('left out', html)
+        self.assertNotIn('toggle-older', html)
+
+    def test_the_choice_is_stored_and_then_carried(self):
+        self.fallout()
+
+        response = self.client.get(reverse('ports:fallout'), {'older': '1'})
+        self.assertEqual(response.cookies[OLDER_COOKIE].value, '1')
+
+        # A later page names nothing, so the cookie is what decides.
+        for url in [reverse('ports:fallout'), reverse('ports:detail', args=[self.port.origin])]:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertTrue(response.context['form_older'])
+                self.assertEqual(len(self.rows(response)), 1)
+
+    def test_unticking_the_box_is_not_the_same_as_being_silent(self):
+        """A checkbox sends nothing when off; the hidden field is what speaks"""
+
+        self.fallout()
+        self.client.cookies[OLDER_COOKIE] = '1'
+
+        # What the form submits with the box unticked.
+        response = self.client.get(reverse('ports:fallout'), {'older': '0'})
+        self.assertFalse(response.context['form_older'])
+        self.assertEqual(response.cookies[OLDER_COOKIE].value, '0')
+        self.assertEqual(self.rows(response), [])
+
+    def test_the_form_sends_both_values_when_ticked(self):
+        """hidden `0` then checkbox `1`; the last one is the answer"""
+
+        self.fallout()
+        response = self.client.get(reverse('ports:fallout') + '?older=0&older=1')
+        self.assertTrue(response.context['form_older'])
+        self.assertEqual(len(self.rows(response)), 1)
+
+    def test_the_form_carries_the_hidden_field(self):
+        html = self.client.get(reverse('ports:fallout')).content.decode()
+        self.assertIn('<input type="hidden" name="older" value="0">', html)
+
+    def test_a_page_that_was_not_told_does_not_rewrite_the_cookie(self):
+        response = self.client.get(reverse('ports:fallout'))
+        self.assertNotIn(OLDER_COOKIE, response.cookies)
+
+    def test_the_response_varies_by_cookie(self):
+        """The site wide cache must keep the two answers apart"""
+
+        for url in [reverse('ports:fallout'), reverse('ports:detail', args=[self.port.origin])]:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertIn('Cookie', response.headers.get('Vary', ''))
