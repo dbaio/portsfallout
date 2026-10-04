@@ -1,6 +1,22 @@
 Changelog
 =========
 
+Version 1.15.0
+--------------
+
+* Keep the version each port has in the ports tree, read from the INDEX, and
+  show it next to the one that failed, so a fallout says at a glance whether
+  the tree has already moved on
+* Leave those failures out of the fallout list and of a port's own history,
+  under an option that is remembered between pages; a port page names how many
+  it is leaving out rather than hiding them silently
+* Read no tree version for a port whose flavors disagree on one, or whose
+  version is built around an OSVERSION as a kernel module's is, since what the
+  INDEX holds there is one jail's build and not what the tree has
+* Only the main branch is judged, as no INDEX is published for quarterly
+* The new column is filled by ``scripts/cron-import-index.sh``, so until that
+  has run once nothing is left out and the column is empty
+
 Version 1.14.1
 --------------
 
